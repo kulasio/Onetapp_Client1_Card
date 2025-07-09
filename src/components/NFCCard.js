@@ -34,7 +34,7 @@ import {
   PlayArrow,
   Add
 } from '@mui/icons-material';
-import { fetchCardData, logTap, logUserAction, getQueryParam, bufferToBase64 } from '../services/apiService';
+import { fetchCardData, logTap, logUserAction, getCardUidParam, getQueryParam, bufferToBase64 } from '../services/apiService';
 
 const NFCCard = () => {
   const [openBookingDialog, setOpenBookingDialog] = useState(false);
@@ -54,7 +54,7 @@ const NFCCard = () => {
   useEffect(() => {
     const loadCardData = async () => {
       try {
-        const cardUid = getQueryParam('cardUid');
+        const cardUid = getCardUidParam();
         if (!cardUid) {
           setError('No cardUid specified in URL.');
           setLoading(false);

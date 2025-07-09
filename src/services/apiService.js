@@ -1,9 +1,9 @@
 import { API_ENDPOINTS } from '../config/api';
 
-// Helper: Get cardUid from URL parameters
-export const getQueryParam = (param) => {
+// Helper: Get cardUid from URL parameters (accepts both cardUid and cardUID)
+export const getCardUidParam = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+  return urlParams.get('cardUid') || urlParams.get('cardUID');
 };
 
 // Convert Buffer to base64 string (for profile images)
