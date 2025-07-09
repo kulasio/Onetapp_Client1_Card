@@ -6,6 +6,12 @@ export const getCardUidParam = () => {
   return urlParams.get('cardUid') || urlParams.get('cardUID');
 };
 
+// Helper: Get any query parameter by name
+export const getQueryParam = (param) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+};
+
 // Convert Buffer to base64 string (for profile images)
 export const bufferToBase64 = (bufferObj) => {
   if (!bufferObj || !bufferObj.data) return '';
