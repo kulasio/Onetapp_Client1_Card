@@ -34,7 +34,7 @@ import {
   PlayArrow,
   Add
 } from '@mui/icons-material';
-import { fetchCardData, logTap, logUserAction, getCardUidParam, getQueryParam, bufferToBase64 } from '../services/apiService';
+import { fetchCardData, logTap, logUserAction, getCardUidParam, getQueryParam } from '../services/apiService';
 
 const NFCCard = () => {
   const [openBookingDialog, setOpenBookingDialog] = useState(false);
