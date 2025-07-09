@@ -62,31 +62,14 @@ const NFCCard = () => {
         }
 
         const apiData = await fetchCardData(cardUid);
-        
+        // Handle both wrapped and unwrapped API responses
+        const data = apiData.success ? apiData : apiData;
         // Transform backend data to match component structure
         const transformedData = {
-          profile: {
-            fullName: apiData.profile?.fullName || apiData.user?.username || '',
-            jobTitle: apiData.profile?.jobTitle || '',
-            location: apiData.profile?.location || '',
-            bio: apiData.profile?.bio || '',
-            profileImage: apiData.profile?.profileImage?.data?.data 
-              ? `data:image/jpeg;base64,${bufferToBase64({ data: apiData.profile.profileImage.data.data })}`
-              : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
-            company: apiData.profile?.company || '',
-            contact: {
-              email: apiData.profile?.contact?.email || apiData.user?.email || '',
-              phone: apiData.profile?.contact?.phone || ''
-            },
-            socialLinks: apiData.profile?.socialLinks || {},
-            featuredLinks: apiData.profile?.featuredLinks || [],
-            gallery: apiData.profile?.gallery || [],
-            recentActivity: apiData.profile?.recentActivity || []
-          },
-          card: apiData.card,
-          user: apiData.user
+          profile: data.profile ? data.profile : {},
+          card: data.card ? data.card : {},
+          user: data.user ? data.user : {}
         };
-
         setCardData(transformedData);
         
         // Log the tap for analytics
