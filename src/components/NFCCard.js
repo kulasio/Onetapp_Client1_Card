@@ -386,18 +386,10 @@ END:VCARD`.trim();
           <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 1, color: '#2d3748' }}>
             Gallery
           </Typography>
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1, 
-            overflowX: 'auto', 
-            marginBottom: 2,
-            paddingBottom: 1,
-            borderBottom: '1px solid #f0f0f0'
-          }}>
+          <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', marginBottom: 2, paddingBottom: 1, borderBottom: '1px solid #f0f0f0' }}>
             {cardData.profile.gallery.map((item, index) => (
               <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
                 <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
-                  {/* Make the image or video thumbnail clickable */}
                   <a
                     href={item.url}
                     target="_blank"
