@@ -397,32 +397,40 @@ END:VCARD`.trim();
             {cardData.profile.gallery.map((item, index) => (
               <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
                 <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
-                  <img
-                    src={item.type === 'video' ? item.thumbnail : item.url}
-                    alt={item.title}
-                    style={{
-                      width: '100%',
-                      height: 68,
-                      objectFit: 'cover',
-                      borderRadius: 8
-                    }}
-                    onClick={() => handleMediaInteraction(item.type, item.title, 'view')}
-                  />
-                  {item.type === 'video' && (
-                    <PlayArrow
-                      sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        color: 'white',
-                        backgroundColor: 'rgba(0,0,0,0.5)',
-                        borderRadius: '50%',
-                        padding: 0.5
+                  {/* Make the image or video thumbnail clickable */}
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleMediaInteraction(item.type, item.title, item.type === 'video' ? 'play' : 'view')}
+                  >
+                    <img
+                      src={item.type === 'video' ? item.thumbnail : item.url}
+                      alt={item.title}
+                      style={{
+                        width: '100%',
+                        height: 68,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        cursor: 'pointer'
                       }}
-                      onClick={() => handleMediaInteraction('video', item.title, 'play')}
                     />
-                  )}
+                    {item.type === 'video' && (
+                      <PlayArrow
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          color: 'white',
+                          backgroundColor: 'rgba(0,0,0,0.5)',
+                          borderRadius: '50%',
+                          padding: 0.5,
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    )}
+                  </a>
                 </Box>
                 <Typography variant="caption" sx={{ fontSize: '0.9rem', color: '#333' }}>
                   {item.title}
