@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'https://onetapp-backend.onrender.com';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://onetapp-backend.onrender.com';
 
 export const API_ENDPOINTS = {
   // Card endpoints

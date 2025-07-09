@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "NFC Card",
+  "name": "NFC Business Card",
+  "description": "Share your digital profile instantly with NFC technology",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,9 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#23272f",
+  "background_color": "#f4f6fb",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "social"],
+  "lang": "en"
 }

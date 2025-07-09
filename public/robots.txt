@@ -1,3 +1,9 @@
-# https://www.robotstxt.org/robotstxt.html
+# Allow all crawlers
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap (if you have one)
+# Sitemap: https://your-domain.vercel.app/sitemap.xml
+
+# Disallow API calls from crawlers
+Disallow: /api/
