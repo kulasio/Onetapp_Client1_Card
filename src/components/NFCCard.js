@@ -391,10 +391,21 @@ END:VCARD`.trim();
               <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
                 <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
                   <a
-                    href={item.url}
+                    href={item.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => handleMediaInteraction(item.type, item.title, item.type === 'video' ? 'play' : 'view')}
+                    onClick={e => {
+                      if (!item.url || !/^https?:\/\//.test(item.url)) {
+                        e.preventDefault();
+                        alert('This media does not have a valid URL.');
+                        return;
+                      }
+                      handleMediaInteraction(
+                        item.type,
+                        item.title,
+                        item.type === 'video' ? 'play' : 'view'
+                      );
+                    }}
                   >
                     <img
                       src={item.type === 'video' ? item.thumbnail : item.url}
