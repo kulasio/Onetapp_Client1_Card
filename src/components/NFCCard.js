@@ -65,8 +65,21 @@ const NFCCard = () => {
         // Handle both wrapped and unwrapped API responses
         const data = apiData.success ? apiData : apiData;
         // Transform backend data to match component structure
+        let profileImage = '';
+        if (data.profile && data.profile.profileImage) {
+          if (data.profile.profileImage.data && Array.isArray(data.profile.profileImage.data)) {
+            // Buffer object, convert to base64
+            const base64 = btoa(String.fromCharCode(...data.profile.profileImage.data));
+            profileImage = `data:image/jpeg;base64,${base64}`;
+          } else if (typeof data.profile.profileImage === 'string') {
+            profileImage = data.profile.profileImage;
+          }
+        }
         const transformedData = {
-          profile: data.profile ? data.profile : {},
+          profile: {
+            ...data.profile,
+            profileImage: profileImage || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'
+          },
           card: data.card ? data.card : {},
           user: data.user ? data.user : {}
         };
