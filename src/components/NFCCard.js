@@ -383,59 +383,70 @@ END:VCARD`.trim();
             Gallery
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', marginBottom: 2, paddingBottom: 1, borderBottom: '1px solid #f0f0f0' }}>
-            {cardData.profile.gallery.map((item, index) => (
-              <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
-                <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
-                  <a
-                    href={item.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={e => {
-                      if (!item.url || !/^https?:\/\//.test(item.url)) {
-                        e.preventDefault();
-                        alert('This media does not have a valid URL.');
-                        return;
-                      }
-                      handleMediaInteraction(
-                        item.type,
-                        item.title,
-                        item.type === 'video' ? 'play' : 'view'
-                      );
-                    }}
-                  >
-                    <img
-                      src={item.type === 'video' ? item.thumbnail : item.url}
-                      alt={item.title}
-                      style={{
-                        width: '100%',
-                        height: 68,
-                        objectFit: 'cover',
-                        borderRadius: 8,
-                        cursor: 'pointer'
+            {cardData.profile.gallery.map((item, index) => {
+              // Determine the image or video source
+              let imgSrc = '';
+              if (item.type === 'image') {
+                if (item.data && Array.isArray(item.data)) {
+                  // Buffer object, convert to base64
+                  const base64 = btoa(String.fromCharCode(...item.data));
+                  imgSrc = `data:image/jpeg;base64,${base64}`;
+                } else if (typeof item.url === 'string') {
+                  imgSrc = item.url;
+                }
+              } else if (item.type === 'video') {
+                imgSrc = item.thumbnail;
+              }
+              return (
+                <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
+                  <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
+                    <a
+                      href={item.type === 'video' ? item.url : imgSrc}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => {
+                        if (!imgSrc && item.type !== 'video') {
+                          e.preventDefault();
+                          alert('This media does not have a valid URL.');
+                          return;
+                        }
+                        handleMediaInteraction(item.type, item.title, item.type === 'video' ? 'play' : 'view');
                       }}
-                    />
-                    {item.type === 'video' && (
-                      <PlayArrow
-                        sx={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          color: 'white',
-                          backgroundColor: 'rgba(0,0,0,0.5)',
-                          borderRadius: '50%',
-                          padding: 0.5,
-                          pointerEvents: 'none'
+                    >
+                      <img
+                        src={imgSrc}
+                        alt={item.title}
+                        style={{
+                          width: '100%',
+                          height: 68,
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          cursor: 'pointer'
                         }}
                       />
-                    )}
-                  </a>
+                      {item.type === 'video' && (
+                        <PlayArrow
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'white',
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            borderRadius: '50%',
+                            padding: 0.5,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      )}
+                    </a>
+                  </Box>
+                  <Typography variant="caption" sx={{ fontSize: '0.9rem', color: '#333' }}>
+                    {item.title}
+                  </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ fontSize: '0.9rem', color: '#333' }}>
-                  {item.title}
-                </Typography>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
 
           {/* Recent Activity */}
