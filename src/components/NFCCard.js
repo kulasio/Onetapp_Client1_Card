@@ -49,6 +49,8 @@ const NFCCard = () => {
   const [cardData, setCardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [popupImage, setPopupImage] = useState(null);
+  const [popupOpen, setPopupOpen] = useState(false);
 
   // Fetch card data on component mount
   useEffect(() => {
@@ -384,13 +386,13 @@ END:VCARD`.trim();
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', marginBottom: 2, paddingBottom: 1, borderBottom: '1px solid #f0f0f0' }}>
             {cardData.profile.gallery.map((item, index) => {
-              // Determine the image or video source
               let imgSrc = '';
+              let isBufferImage = false;
               if (item.type === 'image') {
                 if (item.data && Array.isArray(item.data)) {
-                  // Buffer object, convert to base64
                   const base64 = btoa(String.fromCharCode(...item.data));
                   imgSrc = `data:image/jpeg;base64,${base64}`;
+                  isBufferImage = true;
                 } else if (typeof item.url === 'string') {
                   imgSrc = item.url;
                 }
@@ -400,46 +402,69 @@ END:VCARD`.trim();
               return (
                 <Box key={index} sx={{ minWidth: 110, textAlign: 'center' }}>
                   <Box sx={{ position: 'relative', marginBottom: 0.5 }}>
-                    <a
-                      href={item.type === 'video' ? item.url : imgSrc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => {
-                        if (!imgSrc && item.type !== 'video') {
-                          e.preventDefault();
-                          alert('This media does not have a valid URL.');
-                          return;
-                        }
-                        handleMediaInteraction(item.type, item.title, item.type === 'video' ? 'play' : 'view');
-                      }}
-                    >
-                      <img
-                        src={imgSrc}
-                        alt={item.title}
-                        style={{
-                          width: '100%',
-                          height: 68,
-                          objectFit: 'cover',
-                          borderRadius: 8,
-                          cursor: 'pointer'
+                    {item.type === 'image' && isBufferImage ? (
+                      <span
+                        style={{ display: 'inline-block', cursor: 'pointer' }}
+                        onClick={() => {
+                          setPopupImage(imgSrc);
+                          setPopupOpen(true);
+                          handleMediaInteraction(item.type, item.title, 'view');
                         }}
-                      />
-                      {item.type === 'video' && (
-                        <PlayArrow
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: 'white',
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            borderRadius: '50%',
-                            padding: 0.5,
-                            pointerEvents: 'none'
+                      >
+                        <img
+                          src={imgSrc}
+                          alt={item.title}
+                          style={{
+                            width: '100%',
+                            height: 68,
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            cursor: 'pointer'
                           }}
                         />
-                      )}
-                    </a>
+                      </span>
+                    ) : (
+                      <a
+                        href={item.type === 'video' ? item.url : imgSrc}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => {
+                          if (!imgSrc && item.type !== 'video') {
+                            e.preventDefault();
+                            alert('This media does not have a valid URL.');
+                            return;
+                          }
+                          handleMediaInteraction(item.type, item.title, item.type === 'video' ? 'play' : 'view');
+                        }}
+                      >
+                        <img
+                          src={imgSrc}
+                          alt={item.title}
+                          style={{
+                            width: '100%',
+                            height: 68,
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            cursor: 'pointer'
+                          }}
+                        />
+                        {item.type === 'video' && (
+                          <PlayArrow
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              color: 'white',
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              borderRadius: '50%',
+                              padding: 0.5,
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        )}
+                      </a>
+                    )}
                   </Box>
                   <Typography variant="caption" sx={{ fontSize: '0.9rem', color: '#333' }}>
                     {item.title}
@@ -549,6 +574,11 @@ END:VCARD`.trim();
           Thank you! Your meeting request has been submitted.
         </Alert>
       </Snackbar>
+
+      {/* Popup Modal for enlarged images */}
+      <Dialog open={popupOpen} onClose={() => setPopupOpen(false)} maxWidth="md">
+        <img src={popupImage} alt="Enlarged" style={{ maxWidth: '90vw', maxHeight: '80vh' }} />
+      </Dialog>
     </Box>
   );
 };
