@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
-  CardMedia,
   Typography,
   Box,
   Button,
