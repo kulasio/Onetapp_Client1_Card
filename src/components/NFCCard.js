@@ -69,11 +69,11 @@ const NFCCard = () => {
         // Transform backend data to match component structure
         let profileImage = '';
         if (data.profile && data.profile.profileImage) {
-          if (data.profile.profileImage.data && Array.isArray(data.profile.profileImage.data)) {
-            // Buffer object, convert to base64
-            const base64 = btoa(String.fromCharCode(...data.profile.profileImage.data));
-            profileImage = `data:image/jpeg;base64,${base64}`;
+          if (data.profile.profileImage.data && typeof data.profile.profileImage.data === 'string') {
+            // Backend now sends base64 string directly
+            profileImage = `data:${data.profile.profileImage.contentType || 'image/jpeg'};base64,${data.profile.profileImage.data}`;
           } else if (typeof data.profile.profileImage === 'string') {
+            // Fallback for direct string URLs
             profileImage = data.profile.profileImage;
           }
         }
@@ -389,9 +389,9 @@ END:VCARD`.trim();
               let imgSrc = '';
               let isBufferImage = false;
               if (item.type === 'image') {
-                if (item.data && Array.isArray(item.data)) {
-                  const base64 = btoa(String.fromCharCode(...item.data));
-                  imgSrc = `data:image/jpeg;base64,${base64}`;
+                if (item.data && typeof item.data === 'string') {
+                  // Backend now sends base64 string directly
+                  imgSrc = `data:${item.contentType || 'image/jpeg'};base64,${item.data}`;
                   isBufferImage = true;
                 } else if (typeof item.url === 'string') {
                   imgSrc = item.url;

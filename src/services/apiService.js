@@ -15,7 +15,15 @@ export const getQueryParam = (param) => {
 // Convert Buffer to base64 string (for profile images)
 export const bufferToBase64 = (bufferObj) => {
   if (!bufferObj || !bufferObj.data) return '';
-  return btoa(String.fromCharCode(...bufferObj.data));
+  if (typeof bufferObj.data === 'string') {
+    // Already a base64 string
+    return bufferObj.data;
+  }
+  if (Array.isArray(bufferObj.data)) {
+    // Buffer object with .data array
+    return btoa(String.fromCharCode(...bufferObj.data));
+  }
+  return '';
 };
 
 // Fetch card data from backend
