@@ -34,7 +34,51 @@ import {
   PlayArrow,
   Add
 } from '@mui/icons-material';
-import { fetchCardData, logTap, logUserAction, getCardUidParam, getQueryParam } from '../services/apiService';
+
+// Re-implement needed functions:
+const getCardUidParam = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('cardUid') || urlParams.get('cardUID');
+};
+
+const getQueryParam = (param) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+};
+
+const fetchCardData = async (cardUid) => {
+  // You may want to use your environment variable for the API base URL
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://onetapp-backend.onrender.com';
+  const response = await fetch(`${API_BASE_URL}/api/cards/dynamic/${cardUid}`);
+  if (!response.ok) throw new Error('Card not found');
+  return await response.json();
+};
+
+const logTap = async (tapData) => {
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://onetapp-backend.onrender.com';
+  try {
+    await fetch(`${API_BASE_URL}/api/taps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tapData),
+    });
+  } catch (error) {
+    // Ignore errors for analytics
+  }
+};
+
+const logUserAction = async (cardId, actionData) => {
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://onetapp-backend.onrender.com';
+  try {
+    await fetch(`${API_BASE_URL}/api/taps/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardId, ...actionData, timestamp: new Date().toISOString() }),
+    });
+  } catch (error) {
+    // Ignore errors for analytics
+  }
+};
 
 const NFCCard = () => {
   const [openBookingDialog, setOpenBookingDialog] = useState(false);
