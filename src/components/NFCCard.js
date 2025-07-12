@@ -67,20 +67,10 @@ const NFCCard = () => {
         // Handle both wrapped and unwrapped API responses
         const data = apiData.success ? apiData : apiData;
         // Transform backend data to match component structure
-        let profileImage = '';
-        if (data.profile && data.profile.profileImage) {
-          if (data.profile.profileImage.data && typeof data.profile.profileImage.data === 'string') {
-            // Backend now sends base64 string directly
-            profileImage = `data:${data.profile.profileImage.contentType || 'image/jpeg'};base64,${data.profile.profileImage.data}`;
-          } else if (typeof data.profile.profileImage === 'string') {
-            // Fallback for direct string URLs
-            profileImage = data.profile.profileImage;
-          }
-        }
         const transformedData = {
           profile: {
-            ...data.profile,
-            profileImage: profileImage // No fallback image
+            ...data.profile
+            // profileImage is not set or used
           },
           card: data.card ? data.card : {},
           user: data.user ? data.user : {}
@@ -264,14 +254,8 @@ END:VCARD`.trim();
         boxShadow: '0 6px 32px rgba(25, 30, 50, 0.10)',
         background: '#fff'
       }}>
-        <CardMedia
-          component="img"
-          height="600"
-          image={cardData.profile.profileImage}
-          alt={cardData.profile.fullName}
-          sx={{ objectFit: 'cover', objectPosition: 'top' }}
-        />
-        
+        {/* Profile image removed */}
+        {/* <CardMedia ... /> removed */}
         <CardContent sx={{ padding: 3 }}>
           {/* Name and Title */}
           <Typography variant="h4" component="h1" sx={{ 
