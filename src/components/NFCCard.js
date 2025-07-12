@@ -254,8 +254,14 @@ END:VCARD`.trim();
         boxShadow: '0 6px 32px rgba(25, 30, 50, 0.10)',
         background: '#fff'
       }}>
-        {/* Profile image removed */}
-        {/* <CardMedia ... /> removed */}
+        {/* Profile image display (base64-in-JSON) */}
+        {cardData.profile.profileImage && cardData.profile.profileImage.data && (
+          <img
+            src={`data:${cardData.profile.profileImage.contentType};base64,${cardData.profile.profileImage.data}`}
+            alt={cardData.profile.fullName}
+            style={{ width: '100%', height: 300, objectFit: 'cover', borderRadius: 8 }}
+          />
+        )}
         <CardContent sx={{ padding: 3 }}>
           {/* Name and Title */}
           <Typography variant="h4" component="h1" sx={{ 
