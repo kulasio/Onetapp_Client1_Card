@@ -1,125 +1,139 @@
-# NFC Card React App
+# NFC Business Card - React Version
 
-A React-based NFC business card viewer that connects to your backend API and tracks analytics.
+A React-based implementation of the NFC business card that works with localhost. This version maintains all the original functionality except for the recent activity section.
 
 ## Features
 
-- **Dynamic Card Loading**: Fetches card data from your backend API
-- **Analytics Tracking**: Logs taps and user interactions for analytics
-- **Modern UI**: Built with Material-UI components
-- **Responsive Design**: Works on mobile and desktop
-- **Vercel Ready**: Optimized for deployment on Vercel
+- **Profile Display**: Shows profile image, name, title, and location
+- **Social Links**: Displays social media links with click tracking
+- **Bio Section**: Shows user bio information
+- **Featured Links**: Displays custom/featured links with modal for additional links
+- **Gallery**: Image gallery with modal view and navigation
+- **Book Now**: Meeting request form with modal
+- **Analytics**: Tracks user interactions and location data
+- **Responsive Design**: Works on mobile and desktop devices
 
-## Backend Integration
+## Prerequisites
 
-The app connects to your backend at `https://onetapp-backend.onrender.com` and:
+- Node.js (v14 or higher)
+- npm or yarn
+- Backend server running on localhost:5000
 
-1. **Fetches Card Data**: Uses the same API endpoint as `NFC_Card_1`
-2. **Logs Taps**: Automatically logs when someone views a card
-3. **Tracks Interactions**: Logs link clicks, media views, and contact saves
+## Installation
 
-## Deployment
-
-### Vercel Deployment
-
-1. **Connect to Vercel**:
-   ```bash
-   # Install Vercel CLI
-   npm i -g vercel
-   
-   # Deploy
-   vercel
-   ```
-
-2. **Environment Variables** (optional):
-   - `REACT_APP_API_BASE_URL`: Backend API URL
-   - `REACT_APP_ENABLE_ANALYTICS`: Enable/disable analytics
-
-3. **Custom Domain**: Configure in Vercel dashboard
-
-### Manual Deployment
-
+1. Navigate to the project directory:
 ```bash
-# Build for production
-npm run build
-
-# Deploy build folder to your hosting service
+cd nfc-card-react
 ```
 
-## Usage
+2. Install dependencies:
+```bash
+npm install
+```
 
-### Development
+## Running the Application
+
+1. Start the React development server:
 ```bash
 npm start
 ```
 
-### Production Build
+2. The application will open at `http://localhost:3000`
+
+3. To view a specific business card, add the cardUid as a query parameter:
+```
+http://localhost:3000?cardUid=YOUR_CARD_UID
+```
+
+## Backend Configuration
+
+Make sure your backend server is running on `localhost:5000` and has the following endpoints:
+
+- `GET /api/cards/dynamic/:cardUid` - Get card data with user and profile info
+- `POST /api/taps` - Log tap events
+- `POST /api/taps/action` - Log user actions
+
+## API Integration
+
+The React app communicates with the backend through the following API calls:
+
+### Fetching Card Data
+```javascript
+GET /api/cards/dynamic/{cardUid}
+```
+
+### Logging Tap Events
+```javascript
+POST /api/taps
+{
+  cardId: string,
+  timestamp: Date,
+  userAgent: string,
+  sessionId: string,
+  actions: Array
+}
+```
+
+### Logging User Actions
+```javascript
+POST /api/taps/action
+{
+  cardId: string,
+  timestamp: Date,
+  userAgent: string,
+  sessionId: string,
+  actions: Array
+}
+```
+
+## Features Removed
+
+- **Recent Activity**: This section has been removed as requested
+
+## Styling
+
+The application uses:
+- Bootstrap 5 for layout and components
+- Font Awesome for icons
+- Custom CSS for business card styling
+- Inter font family for typography
+
+## Development
+
+### Project Structure
+```
+src/
+├── components/
+│   └── BusinessCard.js    # Main business card component
+├── App.js                 # Main application component
+├── App.css               # Custom styles
+└── index.js              # Application entry point
+```
+
+### Key Components
+
+- **App.js**: Handles data fetching, analytics, and modal state
+- **BusinessCard.js**: Renders the business card UI
+- **App.css**: Contains all styling for the business card
+
+## Building for Production
+
+To create a production build:
+
 ```bash
 npm run build
 ```
 
-### URL Parameters
+The build files will be created in the `build` directory.
 
-- `cardUid`: Required - The unique identifier for the card
-- `eventId`: Optional - Event/location ID for analytics
+## Troubleshooting
 
-Example: `https://your-app.vercel.app/?cardUid=abc123&eventId=event456`
+1. **CORS Issues**: Make sure your backend has CORS configured for `http://localhost:3000`
 
-## Analytics Tracking
+2. **API Connection**: Ensure your backend is running on `localhost:5000`
 
-The app automatically tracks:
+3. **Card Not Found**: Verify the cardUid parameter is correct and the card exists in your database
 
-- **Page Views**: When someone loads a card
-- **Link Clicks**: Social links, featured links
-- **Media Interactions**: Gallery views, video plays
-- **Contact Actions**: Save contact, book meetings
+## License
 
-## File Structure
-
-```
-src/
-├── components/
-│   └── NFCCard.js          # Main card component
-├── config/
-│   └── api.js              # API endpoints configuration
-├── services/
-│   └── apiService.js       # API functions for data fetching and analytics
-└── App.js                  # App wrapper with theme
-
-# Vercel Configuration
-vercel.json                 # Vercel deployment config
-public/
-├── index.html             # Optimized HTML template
-├── manifest.json          # PWA manifest
-└── robots.txt            # SEO configuration
-```
-
-## API Endpoints Used
-
-- `GET /api/cards/dynamic/{cardUid}` - Fetch card data
-- `POST /api/taps` - Log tap analytics
-- `POST /api/taps/action` - Log user actions
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `REACT_APP_API_BASE_URL` | Backend API URL | `https://onetapp-backend.onrender.com` |
-| `REACT_APP_ENABLE_ANALYTICS` | Enable analytics tracking | `true` |
-
-## Performance Optimizations
-
-- **Preconnect**: Backend API preconnection for faster requests
-- **Caching**: Static assets cached for 1 year
-- **Security Headers**: XSS protection, content type options
-- **SEO**: Meta tags, Open Graph, Twitter Cards
-- **PWA**: Manifest for app-like experience
-
-## Differences from NFC_Card_1
-
-- **React-based**: More maintainable and scalable
-- **Better Error Handling**: Loading states and error messages
-- **Enhanced Analytics**: More detailed tracking of user interactions
-- **Modern UI**: Material-UI components with better UX
-- **Vercel Optimized**: Ready for production deployment
-- **Type Safety**: Better data handling and validation
+This project is part of the NFC Business Card system.
