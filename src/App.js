@@ -306,7 +306,7 @@ function App() {
     };
 
     loadCardData();
-  }, []);
+  }, [logTap]);
 
   if (loading) {
     return (
