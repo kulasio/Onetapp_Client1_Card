@@ -160,7 +160,7 @@ function App() {
         }]
       };
 
-      const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       
       // Send tap data immediately
       await fetch(`${API_BASE}/api/taps`, {
@@ -218,7 +218,7 @@ function App() {
 
       console.log('Sending user action to backend:', actionLog);
 
-      const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       const response = await fetch(`${API_BASE}/api/taps/action`, {
         method: 'POST',
         headers: {
@@ -240,7 +240,7 @@ function App() {
 
   // Fetch card data from backend
   const fetchCardData = async (cardUid) => {
-    const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+    const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
     const res = await fetch(`${API_BASE}/api/cards/dynamic/${cardUid}`);
     if (!res.ok) throw new Error('Card not found');
     return await res.json();
