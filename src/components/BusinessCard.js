@@ -6,8 +6,41 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [imageLoadStates, setImageLoadStates] = useState({});
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
 
   const { card, user, profile } = cardData || {};
+
+  // Helper function to validate and format contact data
+  const getContactData = () => {
+    const contactData = {
+      name: profile?.fullName || user?.username || 'Contact',
+      jobTitle: profile?.jobTitle || '',
+      company: profile?.company || '',
+      phone: profile?.phone || '',
+      email: profile?.email || '',
+      website: profile?.website || '',
+      location: profile?.location || '',
+      bio: profile?.bio || '',
+      socialLinks: profile?.socialLinks || {}
+    };
+
+    // Clean and validate phone number
+    if (contactData.phone) {
+      contactData.phone = contactData.phone.replace(/[^\d+\-\(\)\s]/g, '');
+    }
+
+    // Clean and validate email
+    if (contactData.email && !contactData.email.includes('@')) {
+      contactData.email = '';
+    }
+
+    // Clean and validate website
+    if (contactData.website && !contactData.website.startsWith('http')) {
+      contactData.website = `https://${contactData.website}`;
+    }
+
+    return contactData;
+  };
 
   // Get profile image URL
   const getProfileImageUrl = () => {
@@ -55,9 +88,14 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
     // Save Contact button - always show
     actions.push({
-      label: 'Save Contact',
+      label: savingContact ? 'Saving...' : 'Save Contact',
       variant: 'outline-dark',
-      onClick: () => {
+      disabled: savingContact,
+      onClick: async () => {
+        if (savingContact) return;
+        
+        setSavingContact(true);
+        
         // Log the action first
         onLogAction(card._id, {
           type: 'save_contact_click',
@@ -65,43 +103,74 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           url: ''
         });
 
-        // Create vCard data
-        const vCardData = [
-          'BEGIN:VCARD',
-          'VERSION:3.0',
-          `FN:${profile?.fullName || user?.username || 'Contact'}`,
-          `TITLE:${profile?.jobTitle || ''}`,
-          `ORG:${profile?.company || ''}`,
-          `TEL:${profile?.phone || ''}`,
-          `EMAIL:${profile?.email || ''}`,
-          `URL:${profile?.website || ''}`,
-          `ADR:;;${profile?.location || ''}`,
-          `NOTE:${profile?.bio || ''}`,
-          'END:VCARD'
-        ].join('\r\n');
+        try {
+          // Get validated contact details
+          const contact = getContactData();
 
-        // Create and download vCard file
-        const blob = new Blob([vCardData], { type: 'text/vcard' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${profile?.fullName || user?.username || 'contact'}.vcf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+          // Create comprehensive vCard data
+          const vCardLines = [
+            'BEGIN:VCARD',
+            'VERSION:3.0',
+            `FN:${contact.name}`,
+            `N:${contact.name.split(' ').reverse().join(';')};;;`,
+            `TITLE:${contact.jobTitle}`,
+            `ORG:${contact.company}`,
+            `TEL;TYPE=WORK,VOICE:${contact.phone}`,
+            `EMAIL;TYPE=WORK,INTERNET:${contact.email}`,
+            `URL:${contact.website}`,
+            `ADR;TYPE=WORK:;;${contact.location}`,
+            `NOTE:${contact.bio.replace(/\n/g, '\\n')}`,
+            `REV:${new Date().toISOString()}`,
+            'END:VCARD'
+          ];
 
-        // Log the successful download
-        onLogAction(card._id, {
-          type: 'contact_downloaded',
-          label: 'Contact Downloaded',
-          url: ''
-        });
+          // Filter out empty lines and join
+          const vCardData = vCardLines
+            .filter(line => !line.includes(':') || line.split(':')[1]?.trim())
+            .join('\r\n');
+
+          // Create and download vCard file
+          const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${contact.name.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          // Log the successful download
+          onLogAction(card._id, {
+            type: 'contact_downloaded',
+            label: 'Contact Downloaded Successfully',
+            url: ''
+          });
+
+          // Show success feedback
+          if (typeof window !== 'undefined' && window.showToast) {
+            window.showToast('Contact saved successfully!', 'success');
+          }
+        } catch (error) {
+          console.error('Error saving contact:', error);
+          
+          // Log the error
+          onLogAction(card._id, {
+            type: 'contact_download_error',
+            label: 'Contact Download Failed',
+            url: ''
+          });
+
+          // Show error feedback
+          if (typeof window !== 'undefined' && window.showToast) {
+            window.showToast('Failed to save contact. Please try again.', 'error');
+          }
+        } finally {
+          setSavingContact(false);
+        }
       },
-      icon: 'fas fa-user-plus'
+      icon: savingContact ? 'fas fa-spinner fa-spin' : 'fas fa-user-plus'
     });
-
-
 
     return actions;
   };
@@ -282,6 +351,61 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             )}
           </div>
           
+          {/* Contact Information */}
+          <div className="card-section-label">Contact Info</div>
+          <div className="contact-info mb-3">
+            {(() => {
+              const contact = getContactData();
+              const contactItems = [];
+              
+              if (contact.phone) {
+                contactItems.push(
+                  <div key="phone" className="contact-item">
+                    <i className="fas fa-phone text-muted me-2"></i>
+                    <a href={`tel:${contact.phone}`} className="contact-link">
+                      {contact.phone}
+                    </a>
+                  </div>
+                );
+              }
+              
+              if (contact.email) {
+                contactItems.push(
+                  <div key="email" className="contact-item">
+                    <i className="fas fa-envelope text-muted me-2"></i>
+                    <a href={`mailto:${contact.email}`} className="contact-link">
+                      {contact.email}
+                    </a>
+                  </div>
+                );
+              }
+              
+              if (contact.website) {
+                contactItems.push(
+                  <div key="website" className="contact-item">
+                    <i className="fas fa-globe text-muted me-2"></i>
+                    <a href={contact.website} target="_blank" rel="noopener noreferrer" className="contact-link">
+                      {contact.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                );
+              }
+              
+              if (contact.location) {
+                contactItems.push(
+                  <div key="location" className="contact-item">
+                    <i className="fas fa-map-marker-alt text-muted me-2"></i>
+                    <span>{contact.location}</span>
+                  </div>
+                );
+              }
+              
+              return contactItems.length > 0 ? contactItems : (
+                <div className="text-muted">No contact information available</div>
+              );
+            })()}
+          </div>
+          
           {/* Action Buttons */}
           <div className="d-flex gap-3 mb-4">
             {getActionButtons().map((action, index) => (
@@ -290,6 +414,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 variant={action.variant}
                 onClick={action.onClick}
                 className="action-btn flex-fill"
+                disabled={action.disabled}
               >
                 <i className={action.icon} style={{ marginRight: '0.5rem' }}></i>
                 {action.label}

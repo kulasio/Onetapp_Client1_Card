@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Save Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .contact-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .contact-item {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .contact-item i {
+            width: 20px;
+            margin-right: 10px;
+            color: #666;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>Contact Save Test</h1>
+        <p>This page tests the contact saving functionality with sample data.</p>
+        
+        <div class="contact-info">
+            <h3>Sample Contact Information:</h3>
+            <div class="contact-item">
+                <i>👤</i>
+                <strong>Name:</strong> John Doe
+            </div>
+            <div class="contact-item">
+                <i>💼</i>
+                <strong>Title:</strong> Software Engineer
+            </div>
+            <div class="contact-item">
+                <i>🏢</i>
+                <strong>Company:</strong> Tech Solutions Inc.
+            </div>
+            <div class="contact-item">
+                <i>📞</i>
+                <strong>Phone:</strong> +1 (555) 123-4567
+            </div>
+            <div class="contact-item">
+                <i>📧</i>
+                <strong>Email:</strong> john.doe@techsolutions.com
+            </div>
+            <div class="contact-item">
+                <i>🌐</i>
+                <strong>Website:</strong> https://johndoe.dev
+            </div>
+            <div class="contact-item">
+                <i>📍</i>
+                <strong>Location:</strong> San Francisco, CA
+            </div>
+        </div>
+        
+        <button onclick="saveContact()" id="saveBtn">
+            <i class="fas fa-user-plus"></i> Save Contact
+        </button>
+        
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function saveContact() {
+            const button = document.getElementById('saveBtn');
+            const result = document.getElementById('result');
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            result.innerHTML = '';
+            
+            try {
+                // Sample contact data
+                const contact = {
+                    name: 'John Doe',
+                    jobTitle: 'Software Engineer',
+                    company: 'Tech Solutions Inc.',
+                    phone: '+1 (555) 123-4567',
+                    email: 'john.doe@techsolutions.com',
+                    website: 'https://johndoe.dev',
+                    location: 'San Francisco, CA',
+                    bio: 'John Doe is a visionary Chief Executive Officer with over 15 years of executive leadership experience in the technology sector.'
+                };
+
+                // Create vCard data
+                const vCardLines = [
+                    'BEGIN:VCARD',
+                    'VERSION:3.0',
+                    `FN:${contact.name}`,
+                    `N:${contact.name.split(' ').reverse().join(';')};;;`,
+                    `TITLE:${contact.jobTitle}`,
+                    `ORG:${contact.company}`,
+                    `TEL;TYPE=WORK,VOICE:${contact.phone}`,
+                    `EMAIL;TYPE=WORK,INTERNET:${contact.email}`,
+                    `URL:${contact.website}`,
+                    `ADR;TYPE=WORK:;;${contact.location}`,
+                    `NOTE:${contact.bio.replace(/\n/g, '\\n')}`,
+                    `REV:${new Date().toISOString()}`,
+                    'END:VCARD'
+                ];
+
+                // Filter out empty lines and join
+                const vCardData = vCardLines
+                    .filter(line => !line.includes(':') || line.split(':')[1]?.trim())
+                    .join('\r\n');
+
+                // Create and download vCard file
+                const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${contact.name.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                result.innerHTML = '<div class="success">✅ Contact saved successfully! Check your downloads folder.</div>';
+            } catch (error) {
+                console.error('Error saving contact:', error);
+                result.innerHTML = '<div class="error">❌ Failed to save contact. Please try again.</div>';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-user-plus"></i> Save Contact';
+            }
+        }
+    </script>
+</body>
+</html>

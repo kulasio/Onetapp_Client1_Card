@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Modal, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Modal, Form, Button, Alert, Toast, ToastContainer } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css';
@@ -11,6 +11,7 @@ function App() {
   const [error, setError] = useState(null);
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
   const [bookFormData, setBookFormData] = useState({
     name: '',
@@ -23,6 +24,18 @@ function App() {
   });
   const [bookThankYou, setBookThankYou] = useState(false);
 
+  // Toast notification function
+  const showToast = (message, variant = 'success') => {
+    setToast({ show: true, message, variant });
+  };
+
+  // Make toast function available globally
+  useEffect(() => {
+    window.showToast = showToast;
+    return () => {
+      delete window.showToast;
+    };
+  }, []);
 
   // Get cardUid from URL parameters
   const getQueryParam = (param) => {
@@ -240,10 +253,31 @@ function App() {
 
   // Fetch card data from backend
   const fetchCardData = async (cardUid) => {
-    const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-    const res = await fetch(`${API_BASE}/api/cards/dynamic/${cardUid}`);
-    if (!res.ok) throw new Error('Card not found');
-    return await res.json();
+    try {
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const res = await fetch(`${API_BASE}/api/cards/dynamic/${cardUid}`);
+      
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('Card not found');
+        } else if (res.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(`Failed to fetch card data (${res.status})`);
+        }
+      }
+      
+      return await res.json();
+    } catch (error) {
+      console.error('Error fetching card data:', error);
+      
+      // If it's a network error or server is down, provide helpful error message
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      
+      throw error;
+    }
   };
 
   // Handle book now form submission
@@ -517,6 +551,15 @@ function App() {
         </Modal.Body>
       </Modal>
 
+      {/* Toast Container */}
+      <ToastContainer position="top-end" className="p-3">
+        <Toast show={toast.show} onClose={() => setToast({ ...toast, show: false })} delay={3000} autohide>
+          <Toast.Header>
+            <strong className="me-auto">{toast.variant === 'success' ? 'Success' : 'Error'}</strong>
+          </Toast.Header>
+          <Toast.Body>{toast.message}</Toast.Body>
+        </Toast>
+      </ToastContainer>
 
     </div>
   );
