@@ -72,10 +72,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           `FN:${profile?.fullName || user?.username || 'Contact'}`,
           `TITLE:${profile?.jobTitle || ''}`,
           `ORG:${profile?.company || ''}`,
-          `TEL:${profile?.phone || ''}`,
-          `EMAIL:${profile?.email || ''}`,
+          `TEL:${profile?.contact?.phone || ''}`,
+          `EMAIL:${profile?.contact?.email || ''}`,
           `URL:${profile?.website || ''}`,
-          `ADR:;;${profile?.location || ''}`,
+          `ADR:;;${profile?.contact?.location || ''}`,
           `NOTE:${profile?.bio || ''}`,
           'END:VCARD'
         ].join('\r\n');
