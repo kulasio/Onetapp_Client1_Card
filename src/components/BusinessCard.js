@@ -26,7 +26,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
     // Clean and validate phone number
     if (contactData.phone) {
-      contactData.phone = contactData.phone.replace(/[^\d+\-\(\)\s]/g, '');
+      contactData.phone = contactData.phone.replace(/[^\d+\-()\s]/g, '');
     }
 
     // Clean and validate email
