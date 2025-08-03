@@ -205,7 +205,30 @@ body {
   filter: brightness(0.9);
 }
 
-.gallery-item:hover .gallery-image {
+/* Specific styling for video elements in gallery */
+.gallery-image[src*="video"], 
+.gallery-image[src*="cloudinary"] {
+  height: 68px !important;
+  max-height: 68px !important;
+  object-fit: cover;
+}
+
+/* Video elements in gallery */
+.gallery-media-container video {
+  width: 100%;
+  height: 68px !important;
+  max-height: 68px !important;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.4rem;
+  transition: all 0.3s ease;
+  filter: brightness(0.9);
+  /* Hide video controls in gallery preview */
+  pointer-events: none;
+}
+
+.gallery-item:hover .gallery-image,
+.gallery-item:hover video {
   filter: brightness(1.1);
   transform: scale(1.05);
 }
