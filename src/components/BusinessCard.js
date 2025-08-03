@@ -134,53 +134,33 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
-  // Check if URL is a video
+  // Check if URL is a video (Cloudinary only)
   const isVideoUrl = (url) => {
     if (!url) return false;
     
-    // Check for Cloudinary video URLs (they have /video/ in the path)
+    // Only detect Cloudinary video URLs (they have /video/ in the path)
     if (url.includes('cloudinary.com') && url.includes('/video/')) {
       return true;
     }
     
-    // Check for video file extensions
+    // For legacy support, check for video file extensions
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
     const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
     
-    // Check for video domains
-    const videoDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com'];
-    const isVideoDomain = videoDomains.some(domain => url.toLowerCase().includes(domain));
-    
-    return hasVideoExtension || isVideoDomain;
+    return hasVideoExtension;
   };
 
-  // Get video thumbnail URL
+  // Get video thumbnail URL (Cloudinary only)
   const getVideoThumbnail = (url) => {
     if (!url) return null;
     
-    // Cloudinary video thumbnail - add video thumbnail transformation
+    // Only handle Cloudinary video thumbnails
     if (url.includes('cloudinary.com') && url.includes('/video/')) {
       // Add thumbnail transformation to Cloudinary URL
       return url.replace('/upload/', '/upload/w_300,h_200,c_fill,f_auto/');
     }
     
-    // YouTube thumbnail
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
-      if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-      }
-    }
-    
-    // Vimeo thumbnail
-    if (url.includes('vimeo.com')) {
-      const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
-      if (videoId) {
-        return `https://vumbnail.com/${videoId}.jpg`;
-      }
-    }
-    
-    // For other video URLs, return a video icon placeholder
+    // For non-Cloudinary videos, return null (no thumbnail)
     return null;
   };
 
@@ -415,13 +395,22 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           <>
                             {isVideo ? (
                               <>
-                                <img
-                                  src={thumbnailUrl || 'https://via.placeholder.com/120x68/4F46E5/FFFFFF?text=Video'}
-                                  alt={`Gallery ${index + 1}`}
-                                  className="gallery-image"
-                                  onLoad={() => handleImageLoad(index)}
-                                  onError={() => handleImageError(index)}
-                                />
+                                {thumbnailUrl ? (
+                                  // Show thumbnail if available (Cloudinary videos)
+                                  <img
+                                    src={thumbnailUrl}
+                                    alt={`Gallery ${index + 1}`}
+                                    className="gallery-image"
+                                    onLoad={() => handleImageLoad(index)}
+                                    onError={() => handleImageError(index)}
+                                  />
+                                ) : (
+                                  // Show video icon placeholder for non-Cloudinary videos
+                                  <div className="gallery-video-placeholder">
+                                    <i className="fas fa-play-circle"></i>
+                                    <span>Video</span>
+                                  </div>
+                                )}
                                 <div className="video-overlay">
                                   <i className="fas fa-play-circle"></i>
                                 </div>
