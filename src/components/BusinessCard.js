@@ -115,6 +115,18 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   // Debug logging
   console.log('BusinessCard render:', { card, user, profile });
   console.log('Action buttons:', getActionButtons());
+  console.log('Gallery items:', profile?.gallery);
+  if (profile?.gallery) {
+    profile.gallery.forEach((item, index) => {
+      console.log(`Gallery item ${index}:`, {
+        url: item.url,
+        secureUrl: item.secureUrl,
+        publicId: item.publicId,
+        type: item.type,
+        duration: item.duration
+      });
+    });
+  }
 
   // Handle social link click
   const handleSocialClick = (platform, url) => {
@@ -177,11 +189,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
   // Handle image load
   const handleImageLoad = (index) => {
+    console.log(`Image loaded successfully for gallery item ${index}`);
     setImageLoadStates(prev => ({ ...prev, [index]: 'loaded' }));
   };
 
   // Handle image error
   const handleImageError = (index) => {
+    console.log(`Image error for gallery item ${index}`);
     setImageLoadStates(prev => ({ ...prev, [index]: 'error' }));
   };
 
@@ -361,20 +375,30 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 {profile.gallery.map((item, index) => {
                   // Get the correct URL for Cloudinary or legacy data
                   const getItemUrl = () => {
+                    console.log('getItemUrl called with item:', item);
+                    
                     // If it's Cloudinary data, use secureUrl or url
                     if (item.secureUrl) {
+                      console.log('Using secureUrl:', item.secureUrl);
                       return item.secureUrl;
                     } else if (item.url && item.url.startsWith('https://')) {
+                      console.log('Using HTTPS url:', item.url);
                       return item.url;
                     } else if (item.url && item.url.startsWith('http://')) {
                       // Convert HTTP to HTTPS for Cloudinary URLs
-                      return item.url.replace('http://', 'https://');
+                      const httpsUrl = item.url.replace('http://', 'https://');
+                      console.log('Converted HTTP to HTTPS:', httpsUrl);
+                      return httpsUrl;
                     } else if (item.url) {
+                      console.log('Using regular url:', item.url);
                       return item.url;
                     } else if (item.data) {
                       // Legacy base64 data
+                      console.log('Using base64 data');
                       return `data:image/jpeg;base64,${item.data}`;
                     }
+                    
+                    console.log('No valid URL found for item');
                     return null;
                   };
                   
@@ -382,6 +406,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const isVideo = isVideoUrl(itemUrl);
                   const thumbnailUrl = isVideo ? getVideoThumbnail(itemUrl) : itemUrl;
                   const loadState = imageLoadStates[index];
+                  
+                  // Debug logging for gallery items
+                  console.log(`Gallery item ${index} processing:`, {
+                    originalItem: item,
+                    itemUrl,
+                    isVideo,
+                    thumbnailUrl,
+                    loadState
+                  });
                   
                   return (
                     <div key={index} className="gallery-item">
@@ -417,14 +450,21 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                               </>
                             ) : (
                               <>
-                                <img
-                                  src={thumbnailUrl}
-                                  alt={`Gallery ${index + 1}`}
-                                  className="gallery-image"
-                                  onLoad={() => handleImageLoad(index)}
-                                  onError={() => handleImageError(index)}
-                                />
-                                {!loadState && (
+                                {thumbnailUrl ? (
+                                  <img
+                                    src={thumbnailUrl}
+                                    alt={`Gallery ${index + 1}`}
+                                    className="gallery-image"
+                                    onLoad={() => handleImageLoad(index)}
+                                    onError={() => handleImageError(index)}
+                                  />
+                                ) : (
+                                  <div className="gallery-error">
+                                    <i className="fas fa-exclamation-triangle"></i>
+                                    <span>No image URL</span>
+                                  </div>
+                                )}
+                                {!loadState && thumbnailUrl && (
                                   <div className="gallery-loading">
                                     <i className="fas fa-spinner fa-spin"></i>
                                   </div>
