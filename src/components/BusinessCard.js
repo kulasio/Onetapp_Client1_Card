@@ -137,13 +137,18 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   // Check if URL is a video
   const isVideoUrl = (url) => {
     if (!url) return false;
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
-    const videoDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com'];
+    
+    // Check for Cloudinary video URLs (they have /video/ in the path)
+    if (url.includes('cloudinary.com') && url.includes('/video/')) {
+      return true;
+    }
     
     // Check for video file extensions
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
     const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
     
     // Check for video domains
+    const videoDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com'];
     const isVideoDomain = videoDomains.some(domain => url.toLowerCase().includes(domain));
     
     return hasVideoExtension || isVideoDomain;
@@ -152,6 +157,12 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   // Get video thumbnail URL
   const getVideoThumbnail = (url) => {
     if (!url) return null;
+    
+    // Cloudinary video thumbnail - add video thumbnail transformation
+    if (url.includes('cloudinary.com') && url.includes('/video/')) {
+      // Add thumbnail transformation to Cloudinary URL
+      return url.replace('/upload/', '/upload/w_300,h_200,c_fill,f_auto/');
+    }
     
     // YouTube thumbnail
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -501,14 +512,28 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               
               return isVideo ? (
                 <div className="gallery-modal-video">
-                  <iframe
-                    src={currentItemUrl}
-                    title={`Gallery ${galleryIndex + 1}`}
-                    className="gallery-modal-video-frame"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
+                  {currentItemUrl?.includes('cloudinary.com') ? (
+                    // Cloudinary video - use video element
+                    <video
+                      src={currentItemUrl}
+                      controls
+                      autoPlay
+                      className="gallery-modal-video-element"
+                      title={`Gallery ${galleryIndex + 1}`}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    // External video (YouTube, etc.) - use iframe
+                    <iframe
+                      src={currentItemUrl}
+                      title={`Gallery ${galleryIndex + 1}`}
+                      className="gallery-modal-video-frame"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  )}
                 </div>
               ) : (
                 <img
