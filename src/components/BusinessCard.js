@@ -150,29 +150,55 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   const isVideoUrl = (url) => {
     if (!url) return false;
     
-    // Only detect Cloudinary video URLs (they have /video/ in the path)
+    // Detect Cloudinary video URLs
     if (url.includes('cloudinary.com') && url.includes('/video/')) {
       return true;
     }
     
-    // For legacy support, check for video file extensions
+    // Detect YouTube URLs
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return true;
+    }
+    
+    // Detect Vimeo URLs
+    if (url.includes('vimeo.com')) {
+      return true;
+    }
+    
+    // Check for video file extensions
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
     const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
     
     return hasVideoExtension;
   };
 
-  // Get video thumbnail URL (Cloudinary only)
-  const getVideoThumbnail = (url) => {
-    if (!url) return null;
+  // Get video URL for preview
+  const getVideoUrl = (item) => {
+    if (!item) return null;
     
-    // Only handle Cloudinary video thumbnails
-    if (url.includes('cloudinary.com') && url.includes('/video/')) {
-      // Add thumbnail transformation to Cloudinary URL
-      return url.replace('/upload/', '/upload/w_300,h_200,c_fill,f_auto/');
+    // For Cloudinary videos using secureUrl
+    if (item.secureUrl && item.secureUrl.includes('cloudinary.com')) {
+      let secureUrl = item.secureUrl;
+      if (secureUrl.startsWith('http://')) {
+        secureUrl = secureUrl.replace('http://', 'https://');
+      }
+      return secureUrl;
     }
     
-    // For non-Cloudinary videos, return null (no thumbnail)
+    // For Cloudinary videos using url field
+    if (item.url && item.url.includes('cloudinary.com')) {
+      let secureUrl = item.url;
+      if (secureUrl.startsWith('http://')) {
+        secureUrl = secureUrl.replace('http://', 'https://');
+      }
+      return secureUrl;
+    }
+    
+    // For external video URLs (YouTube, Vimeo, etc.)
+    if (item.url && (item.url.startsWith('http://') || item.url.startsWith('https://'))) {
+      return item.url;
+    }
+    
     return null;
   };
 
@@ -403,8 +429,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   };
                   
                   const itemUrl = getItemUrl();
-                  const isVideo = isVideoUrl(itemUrl);
-                  const thumbnailUrl = isVideo ? getVideoThumbnail(itemUrl) : itemUrl;
+                  const isVideo = item.type === 'video' || isVideoUrl(itemUrl);
+                  const videoUrl = isVideo ? getVideoUrl(item) : null;
                   const loadState = imageLoadStates[index];
                   
                   // Debug logging for gallery items
@@ -412,7 +438,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                     originalItem: item,
                     itemUrl,
                     isVideo,
-                    thumbnailUrl,
+                    videoUrl,
                     loadState
                   });
                   
@@ -428,17 +454,20 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           <>
                             {isVideo ? (
                               <>
-                                {thumbnailUrl ? (
-                                  // Show thumbnail if available (Cloudinary videos)
-                                  <img
-                                    src={thumbnailUrl}
-                                    alt={`Gallery ${index + 1}`}
+                                {videoUrl ? (
+                                  // Show actual video preview
+                                  <video 
+                                    src={videoUrl} 
                                     className="gallery-image"
-                                    onLoad={() => handleImageLoad(index)}
-                                    onError={() => handleImageError(index)}
+                                    muted
+                                    preload="metadata"
+                                    onLoadedMetadata={(e) => {
+                                      // Set the current time to show a frame from the video
+                                      e.target.currentTime = 1;
+                                    }}
                                   />
                                 ) : (
-                                  // Show video icon placeholder for non-Cloudinary videos
+                                  // Show video icon placeholder if no video URL
                                   <div className="gallery-video-placeholder">
                                     <i className="fas fa-play-circle"></i>
                                     <span>Video</span>
@@ -450,9 +479,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                               </>
                             ) : (
                               <>
-                                {thumbnailUrl ? (
+                                {itemUrl ? (
                                   <img
-                                    src={thumbnailUrl}
+                                    src={itemUrl}
                                     alt={`Gallery ${index + 1}`}
                                     className="gallery-image"
                                     onLoad={() => handleImageLoad(index)}
@@ -464,7 +493,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                     <span>No image URL</span>
                                   </div>
                                 )}
-                                {!loadState && thumbnailUrl && (
+                                {!loadState && itemUrl && (
                                   <div className="gallery-loading">
                                     <i className="fas fa-spinner fa-spin"></i>
                                   </div>
