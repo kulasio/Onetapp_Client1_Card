@@ -284,8 +284,14 @@ function App() {
         
         // Process profile image
         if (data.profile && data.profile.profileImage) {
-          if (data.profile.profileImage.data && data.profile.profileImage.data.data) {
-            // Buffer to base64
+          // Handle Cloudinary data
+          if (data.profile.profileImage.secureUrl) {
+            data.profile.profileImage.url = data.profile.profileImage.secureUrl;
+          } else if (data.profile.profileImage.url && data.profile.profileImage.url.startsWith('http://')) {
+            // Convert HTTP to HTTPS for Cloudinary URLs
+            data.profile.profileImage.url = data.profile.profileImage.url.replace('http://', 'https://');
+          } else if (data.profile.profileImage.data && data.profile.profileImage.data.data) {
+            // Buffer to base64 (legacy support)
             const base64 = bufferToBase64({ data: data.profile.profileImage.data.data });
             data.profile.profileImage.url = `data:image/jpeg;base64,${base64}`;
           }

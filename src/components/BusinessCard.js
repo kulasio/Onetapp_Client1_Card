@@ -12,7 +12,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   // Get profile image URL
   const getProfileImageUrl = () => {
     if (profile?.profileImage) {
-      if (profile.profileImage.url) {
+      if (profile.profileImage.secureUrl) {
+        return profile.profileImage.secureUrl;
+      } else if (profile.profileImage.url) {
+        // Convert HTTP to HTTPS for Cloudinary URLs
+        if (profile.profileImage.url.startsWith('http://')) {
+          return profile.profileImage.url.replace('http://', 'https://');
+        }
         return profile.profileImage.url;
       } else if (profile.profileImage.data) {
         return `data:image/jpeg;base64,${profile.profileImage.data}`;
@@ -362,8 +368,28 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               <div className="card-section-label">Gallery</div>
               <div className="card-gallery mb-3">
                 {profile.gallery.map((item, index) => {
-                  const isVideo = isVideoUrl(item.url);
-                  const thumbnailUrl = isVideo ? getVideoThumbnail(item.url) : (item.url || `data:image/jpeg;base64,${item.data}`);
+                  // Get the correct URL for Cloudinary or legacy data
+                  const getItemUrl = () => {
+                    // If it's Cloudinary data, use secureUrl or url
+                    if (item.secureUrl) {
+                      return item.secureUrl;
+                    } else if (item.url && item.url.startsWith('https://')) {
+                      return item.url;
+                    } else if (item.url && item.url.startsWith('http://')) {
+                      // Convert HTTP to HTTPS for Cloudinary URLs
+                      return item.url.replace('http://', 'https://');
+                    } else if (item.url) {
+                      return item.url;
+                    } else if (item.data) {
+                      // Legacy base64 data
+                      return `data:image/jpeg;base64,${item.data}`;
+                    }
+                    return null;
+                  };
+                  
+                  const itemUrl = getItemUrl();
+                  const isVideo = isVideoUrl(itemUrl);
+                  const thumbnailUrl = isVideo ? getVideoThumbnail(itemUrl) : itemUrl;
                   const loadState = imageLoadStates[index];
                   
                   return (
@@ -448,12 +474,35 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </button>
             {(() => {
               const currentItem = profile.gallery[galleryIndex];
-              const isVideo = isVideoUrl(currentItem?.url);
+              
+              // Get the correct URL for Cloudinary or legacy data
+              const getCurrentItemUrl = () => {
+                if (!currentItem) return null;
+                
+                // If it's Cloudinary data, use secureUrl or url
+                if (currentItem.secureUrl) {
+                  return currentItem.secureUrl;
+                } else if (currentItem.url && currentItem.url.startsWith('https://')) {
+                  return currentItem.url;
+                } else if (currentItem.url && currentItem.url.startsWith('http://')) {
+                  // Convert HTTP to HTTPS for Cloudinary URLs
+                  return currentItem.url.replace('http://', 'https://');
+                } else if (currentItem.url) {
+                  return currentItem.url;
+                } else if (currentItem.data) {
+                  // Legacy base64 data
+                  return `data:image/jpeg;base64,${currentItem.data}`;
+                }
+                return null;
+              };
+              
+              const currentItemUrl = getCurrentItemUrl();
+              const isVideo = isVideoUrl(currentItemUrl);
               
               return isVideo ? (
                 <div className="gallery-modal-video">
                   <iframe
-                    src={currentItem?.url}
+                    src={currentItemUrl}
                     title={`Gallery ${galleryIndex + 1}`}
                     className="gallery-modal-video-frame"
                     frameBorder="0"
@@ -463,7 +512,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 </div>
               ) : (
                 <img
-                  src={currentItem?.url || `data:image/jpeg;base64,${currentItem?.data}`}
+                  src={currentItemUrl}
                   alt={`Gallery ${galleryIndex + 1}`}
                   className="gallery-modal-image"
                 />
