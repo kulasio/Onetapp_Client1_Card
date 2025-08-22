@@ -36,7 +36,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://onetapp-fresh.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-dashboard.vercel.app"
+          "value": "frame-ancestors 'self' https://onetapp-fresh.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-dashboard.vercel.app https://onetapp-webpage-3wnn.vercel.app/basic-dashboard"
         }
       ]
     }
