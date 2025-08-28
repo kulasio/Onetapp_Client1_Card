@@ -154,8 +154,8 @@ function App() {
         userAgent: deviceInfo.userAgent,
         sessionId: generateSessionId(),
         actions: [{
-          type: 'card_view',
-          label: 'Card Viewed',
+          type: 'business_card_viewed',
+          label: 'Business Card Viewed',
           timestamp: new Date()
         }]
       };
