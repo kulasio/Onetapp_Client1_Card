@@ -215,7 +215,7 @@ function App() {
     } catch (error) {
       console.log('Tap logging failed (non-critical):', error);
     }
-  }, []);
+  }, [getOrCreateSessionId]);
 
   // Log user action to backend
   const logUserAction = async (cardId, actionData) => {
