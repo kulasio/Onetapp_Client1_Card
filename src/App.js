@@ -41,6 +41,22 @@ function App() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   };
 
+  // Persist and reuse a single sessionId per browser session
+  const SESSION_STORAGE_KEY = 'nfc_card_session_id';
+  const getOrCreateSessionId = () => {
+    try {
+      let sid = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (!sid) {
+        sid = generateSessionId();
+        sessionStorage.setItem(SESSION_STORAGE_KEY, sid);
+      }
+      return sid;
+    } catch (e) {
+      // Fallback if storage is unavailable
+      return generateSessionId();
+    }
+  };
+
   // Get device and browser info
   const getDeviceInfo = () => {
     return {
@@ -152,7 +168,7 @@ function App() {
         ip: '',
         geo: {},
         userAgent: deviceInfo.userAgent,
-        sessionId: generateSessionId(),
+        sessionId: getOrCreateSessionId(),
         actions: [{
           type: 'business_card_viewed',
           label: 'Business Card Viewed',
@@ -213,7 +229,7 @@ function App() {
         ip: locationData.ip || '',
         geo: locationData,
         userAgent: deviceInfo.userAgent,
-        sessionId: generateSessionId(),
+        sessionId: getOrCreateSessionId(),
         actions: [{
           type: actionData.type,
           label: actionData.label,
