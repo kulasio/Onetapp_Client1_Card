@@ -177,11 +177,17 @@ function App() {
         const updateData = {
           ...tapData,
           ip: locationData.ip || '',
-          geo: locationData
+          geo: locationData,
+          // Ensure we do not duplicate the initial view action
+          actions: [{
+            type: 'location_update',
+            label: 'Location Updated',
+            timestamp: new Date()
+          }]
         };
-        
-        // Update the tap log with location data
-        fetch(`${API_BASE}/api/taps`, {
+
+        // Update the existing tap via the action endpoint (prevents duplicate tap records)
+        fetch(`${API_BASE}/api/taps/action`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
