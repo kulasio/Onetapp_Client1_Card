@@ -43,7 +43,7 @@ function App() {
 
   // Persist and reuse a single sessionId per browser session
   const SESSION_STORAGE_KEY = 'nfc_card_session_id';
-  const getOrCreateSessionId = () => {
+  const getOrCreateSessionId = useCallback(() => {
     try {
       let sid = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (!sid) {
@@ -55,7 +55,7 @@ function App() {
       // Fallback if storage is unavailable
       return generateSessionId();
     }
-  };
+  }, []);
 
   // Get device and browser info
   const getDeviceInfo = () => {
