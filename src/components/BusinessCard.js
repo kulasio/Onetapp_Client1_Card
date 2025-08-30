@@ -454,7 +454,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const layout = getItemLayout(index);
                   const isImageLeft = layout === 'image-left';
                   
-
+                  // Debug: Log the item data
+                  console.log(`Gallery item ${index}:`, {
+                    item,
+                    layout,
+                    isImageLeft,
+                    title: item.title,
+                    description: item.description,
+                    hasImage: !!itemUrl
+                  });
                   
                   return (
                     <div key={index} className={`gallery-item ${layout}`}>

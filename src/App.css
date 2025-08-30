@@ -196,6 +196,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  background: rgba(255, 0, 0, 0.1); /* Temporary red background to make it visible */
+  padding: 0.5rem;
+  border-radius: 0.5rem;
 }
 
 .gallery-title {
