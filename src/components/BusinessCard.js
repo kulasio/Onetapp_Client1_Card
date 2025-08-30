@@ -6,6 +6,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [imageLoadStates, setImageLoadStates] = useState({});
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   const { card, user, profile } = cardData || {};
 
@@ -235,6 +236,19 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
+  // Handle description expansion
+  const toggleDescription = (itemIndex) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [itemIndex]: !prev[itemIndex]
+    }));
+    onLogAction(card._id, {
+      type: expandedDescriptions[itemIndex] ? 'gallery_description_collapsed' : 'gallery_description_expanded',
+      label: expandedDescriptions[itemIndex] ? 'Collapsed gallery description' : 'Expanded gallery description',
+      url: ''
+    });
+  };
+
   // Format bio text with truncation
   const formatBioText = (text) => {
     if (!text) return '';
@@ -253,6 +267,31 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
       const finalText = lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) : truncated;
       return finalText + '...';
     }
+  };
+
+  // Format description text with truncation
+  const formatDescriptionText = (text, itemIndex) => {
+    if (!text) return '';
+    
+    const maxLength = 120; // Characters to show before truncation
+    const shouldTruncate = text.length > maxLength;
+    
+    if (!shouldTruncate) return text;
+    
+    if (expandedDescriptions[itemIndex]) {
+      return text;
+    } else {
+      // Find the last complete word within the limit
+      const truncated = text.substring(0, maxLength);
+      const lastSpaceIndex = truncated.lastIndexOf(' ');
+      const finalText = lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) : truncated;
+      return finalText + '...';
+    }
+  };
+
+  // Get layout for gallery item (alternating pattern starting with image-left)
+  const getItemLayout = (index) => {
+    return index % 2 === 0 ? 'image-left' : 'text-left';
   };
 
   return (
@@ -397,34 +436,23 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {profile?.gallery && profile.gallery.length > 0 && (
             <>
               <div className="card-section-label">Gallery</div>
-              <div className="card-gallery mb-3">
+              <div className="gallery-grid mb-3">
                 {profile.gallery.map((item, index) => {
                   // Get the correct URL for Cloudinary or legacy data
                   const getItemUrl = () => {
-                    console.log('getItemUrl called with item:', item);
-                    
-                    // If it's Cloudinary data, use secureUrl or url
                     if (item.secureUrl) {
-                      console.log('Using secureUrl:', item.secureUrl);
                       return item.secureUrl;
                     } else if (item.url && item.url.startsWith('https://')) {
-                      console.log('Using HTTPS url:', item.url);
                       return item.url;
                     } else if (item.url && item.url.startsWith('http://')) {
                       // Convert HTTP to HTTPS for Cloudinary URLs
-                      const httpsUrl = item.url.replace('http://', 'https://');
-                      console.log('Converted HTTP to HTTPS:', httpsUrl);
-                      return httpsUrl;
+                      return item.url.replace('http://', 'https://');
                     } else if (item.url) {
-                      console.log('Using regular url:', item.url);
                       return item.url;
                     } else if (item.data) {
                       // Legacy base64 data
-                      console.log('Using base64 data');
                       return `data:image/jpeg;base64,${item.data}`;
                     }
-                    
-                    console.log('No valid URL found for item');
                     return null;
                   };
                   
@@ -432,77 +460,178 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const isVideo = item.type === 'video' || isVideoUrl(itemUrl);
                   const videoUrl = isVideo ? getVideoUrl(item) : null;
                   const loadState = imageLoadStates[index];
-                  
-                  // Debug logging for gallery items
-                  console.log(`Gallery item ${index} processing:`, {
-                    originalItem: item,
-                    itemUrl,
-                    isVideo,
-                    videoUrl,
-                    loadState
-                  });
+                  const layout = getItemLayout(index);
+                  const isImageLeft = layout === 'image-left';
                   
                   return (
-                    <div key={index} className="gallery-item">
-                      <div className="gallery-media-container" onClick={() => handleGalleryClick(index)}>
-                        {loadState === 'error' ? (
-                          <div className="gallery-error">
-                            <i className="fas fa-exclamation-triangle"></i>
-                            <span>Failed to load</span>
-                          </div>
-                        ) : (
-                          <>
-                            {isVideo ? (
-                              <>
-                                {videoUrl ? (
-                                  // Show actual video preview
-                                  <video 
-                                    src={videoUrl} 
-                                    className="gallery-image"
-                                    muted
-                                    preload="metadata"
-                                    onLoadedMetadata={(e) => {
-                                      // Set the current time to show a frame from the video
-                                      e.target.currentTime = 1;
-                                    }}
-                                  />
-                                ) : (
-                                  // Show video icon placeholder if no video URL
-                                  <div className="gallery-video-placeholder">
-                                    <i className="fas fa-play-circle"></i>
-                                    <span>Video</span>
-                                  </div>
-                                )}
-                                <div className="video-overlay">
-                                  <i className="fas fa-play-circle"></i>
-                                </div>
-                              </>
+                    <div key={index} className={`gallery-item ${layout}`}>
+                      {isImageLeft ? (
+                        <>
+                          {/* Image First */}
+                          <div className="gallery-image-container" onClick={() => handleGalleryClick(index)}>
+                            {loadState === 'error' ? (
+                              <div className="gallery-error">
+                                <i className="fas fa-exclamation-triangle"></i>
+                                <span>Failed to load</span>
+                              </div>
                             ) : (
                               <>
-                                {itemUrl ? (
-                                  <img
-                                    src={itemUrl}
-                                    alt={`Gallery ${index + 1}`}
-                                    className="gallery-image"
-                                    onLoad={() => handleImageLoad(index)}
-                                    onError={() => handleImageError(index)}
-                                  />
+                                {isVideo ? (
+                                  <>
+                                    {videoUrl ? (
+                                      <video 
+                                        src={videoUrl} 
+                                        className="gallery-image"
+                                        muted
+                                        preload="metadata"
+                                        onLoadedMetadata={(e) => {
+                                          e.target.currentTime = 1;
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="gallery-video-placeholder">
+                                        <i className="fas fa-play-circle"></i>
+                                        <span>Video</span>
+                                      </div>
+                                    )}
+                                    <div className="video-overlay">
+                                      <i className="fas fa-play-circle"></i>
+                                    </div>
+                                  </>
                                 ) : (
-                                  <div className="gallery-error">
-                                    <i className="fas fa-exclamation-triangle"></i>
-                                    <span>No image URL</span>
-                                  </div>
-                                )}
-                                {!loadState && itemUrl && (
-                                  <div className="gallery-loading">
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                  </div>
+                                  <>
+                                    {itemUrl ? (
+                                      <img
+                                        src={itemUrl}
+                                        alt={item.title || `Gallery ${index + 1}`}
+                                        className="gallery-image"
+                                        onLoad={() => handleImageLoad(index)}
+                                        onError={() => handleImageError(index)}
+                                      />
+                                    ) : (
+                                      <div className="gallery-error">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        <span>No image URL</span>
+                                      </div>
+                                    )}
+                                    {!loadState && itemUrl && (
+                                      <div className="gallery-loading">
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </>
                             )}
-                          </>
-                        )}
-                      </div>
+                          </div>
+                          {/* Text Content Second */}
+                          <div className="gallery-content">
+                            <h4 className="gallery-title">{item.title || `Gallery Item ${index + 1}`}</h4>
+                            <div className="gallery-description">
+                              <span>{formatDescriptionText(item.description || '', index)}</span>
+                              {(item.description || '').length > 120 && (
+                                <button
+                                  className="view-more-btn"
+                                  onClick={() => toggleDescription(index)}
+                                >
+                                  {expandedDescriptions[index] ? (
+                                    <>
+                                      view less <i className="fas fa-chevron-up"></i>
+                                    </>
+                                  ) : (
+                                    <>
+                                      view more <i className="fas fa-chevron-down"></i>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Text Content First */}
+                          <div className="gallery-content">
+                            <h4 className="gallery-title">{item.title || `Gallery Item ${index + 1}`}</h4>
+                            <div className="gallery-description">
+                              <span>{formatDescriptionText(item.description || '', index)}</span>
+                              {(item.description || '').length > 120 && (
+                                <button
+                                  className="view-more-btn"
+                                  onClick={() => toggleDescription(index)}
+                                >
+                                  {expandedDescriptions[index] ? (
+                                    <>
+                                      view less <i className="fas fa-chevron-up"></i>
+                                    </>
+                                  ) : (
+                                    <>
+                                      view more <i className="fas fa-chevron-down"></i>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {/* Image Second */}
+                          <div className="gallery-image-container" onClick={() => handleGalleryClick(index)}>
+                            {loadState === 'error' ? (
+                              <div className="gallery-error">
+                                <i className="fas fa-exclamation-triangle"></i>
+                                <span>Failed to load</span>
+                              </div>
+                            ) : (
+                              <>
+                                {isVideo ? (
+                                  <>
+                                    {videoUrl ? (
+                                      <video 
+                                        src={videoUrl} 
+                                        className="gallery-image"
+                                        muted
+                                        preload="metadata"
+                                        onLoadedMetadata={(e) => {
+                                          e.target.currentTime = 1;
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="gallery-video-placeholder">
+                                        <i className="fas fa-play-circle"></i>
+                                        <span>Video</span>
+                                      </div>
+                                    )}
+                                    <div className="video-overlay">
+                                      <i className="fas fa-play-circle"></i>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    {itemUrl ? (
+                                      <img
+                                        src={itemUrl}
+                                        alt={item.title || `Gallery ${index + 1}`}
+                                        className="gallery-image"
+                                        onLoad={() => handleImageLoad(index)}
+                                        onError={() => handleImageError(index)}
+                                      />
+                                    ) : (
+                                      <div className="gallery-error">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        <span>No image URL</span>
+                                      </div>
+                                    )}
+                                    {!loadState && itemUrl && (
+                                      <div className="gallery-loading">
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}
