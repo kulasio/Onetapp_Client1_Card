@@ -172,6 +172,12 @@ body {
   flex-direction: row-reverse; /* Text left, image right */
 }
 
+/* Ensure proper spacing and alignment */
+.gallery-item > * {
+  flex: 1;
+  min-width: 0; /* Allow flex items to shrink */
+}
+
 .gallery-image-container {
   flex: 1;
   max-width: 200px;

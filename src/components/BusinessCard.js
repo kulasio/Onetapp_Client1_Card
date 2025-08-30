@@ -294,6 +294,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return index % 2 === 0 ? 'image-left' : 'text-left';
   };
 
+  // Debug gallery data
+  console.log('Gallery data:', profile?.gallery);
+
   return (
     <>
       <Card className="w-100 business-card">
@@ -463,6 +466,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const layout = getItemLayout(index);
                   const isImageLeft = layout === 'image-left';
                   
+                  // Debug layout
+                  console.log(`Gallery item ${index}:`, {
+                    layout,
+                    isImageLeft,
+                    title: item.title,
+                    description: item.description,
+                    hasImage: !!itemUrl
+                  });
+                  
                   return (
                     <div key={index} className={`gallery-item ${layout}`}>
                       {isImageLeft ? (
@@ -526,10 +538,17 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           </div>
                           {/* Text Content Second */}
                           <div className="gallery-content">
-                            <h4 className="gallery-title">{item.title || `Gallery Item ${index + 1}`}</h4>
+                            <h4 className="gallery-title">
+                              {item.title || `Gallery Item ${index + 1}`}
+                            </h4>
                             <div className="gallery-description">
-                              <span>{formatDescriptionText(item.description || '', index)}</span>
-                              {(item.description || '').length > 120 && (
+                              <span>
+                                {formatDescriptionText(
+                                  item.description || 'No description available for this gallery item.', 
+                                  index
+                                )}
+                              </span>
+                              {(item.description || 'No description available for this gallery item.').length > 120 && (
                                 <button
                                   className="view-more-btn"
                                   onClick={() => toggleDescription(index)}
@@ -552,10 +571,17 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                         <>
                           {/* Text Content First */}
                           <div className="gallery-content">
-                            <h4 className="gallery-title">{item.title || `Gallery Item ${index + 1}`}</h4>
+                            <h4 className="gallery-title">
+                              {item.title || `Gallery Item ${index + 1}`}
+                            </h4>
                             <div className="gallery-description">
-                              <span>{formatDescriptionText(item.description || '', index)}</span>
-                              {(item.description || '').length > 120 && (
+                              <span>
+                                {formatDescriptionText(
+                                  item.description || 'No description available for this gallery item.', 
+                                  index
+                                )}
+                              </span>
+                              {(item.description || 'No description available for this gallery item.').length > 120 && (
                                 <button
                                   className="view-more-btn"
                                   onClick={() => toggleDescription(index)}
