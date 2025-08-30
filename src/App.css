@@ -182,14 +182,13 @@ body {
   flex: 1;
   max-width: 200px;
   min-width: 150px;
-  cursor: pointer;
   border-radius: 0.8rem;
   overflow: hidden;
   transition: transform 0.3s ease;
 }
 
 .gallery-image-container:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
 .gallery-content {

@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Card, Button } from 'react-bootstrap';
 
 const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAction }) => {
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
   const [imageLoadStates, setImageLoadStates] = useState({});
   const [bioExpanded, setBioExpanded] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
@@ -203,16 +201,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return null;
   };
 
-  // Handle gallery item click
-  const handleGalleryClick = (index) => {
-    setGalleryIndex(index);
-    setShowGalleryModal(true);
-    onLogAction(card._id, {
-      type: 'gallery_item_click',
-      label: `Viewed gallery item ${index + 1}`,
-      url: profile?.gallery?.[index]?.url || ''
-    });
-  };
+
 
   // Handle image load
   const handleImageLoad = (index) => {
@@ -294,8 +283,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return index % 2 === 0 ? 'image-left' : 'text-left';
   };
 
-  // Debug gallery data
-  console.log('Gallery data:', profile?.gallery);
+
 
   return (
     <>
@@ -466,21 +454,14 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const layout = getItemLayout(index);
                   const isImageLeft = layout === 'image-left';
                   
-                  // Debug layout
-                  console.log(`Gallery item ${index}:`, {
-                    layout,
-                    isImageLeft,
-                    title: item.title,
-                    description: item.description,
-                    hasImage: !!itemUrl
-                  });
+
                   
                   return (
                     <div key={index} className={`gallery-item ${layout}`}>
                       {isImageLeft ? (
                         <>
                           {/* Image First */}
-                          <div className="gallery-image-container" onClick={() => handleGalleryClick(index)}>
+                          <div className="gallery-image-container">
                             {loadState === 'error' ? (
                               <div className="gallery-error">
                                 <i className="fas fa-exclamation-triangle"></i>
@@ -600,7 +581,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                             </div>
                           </div>
                           {/* Image Second */}
-                          <div className="gallery-image-container" onClick={() => handleGalleryClick(index)}>
+                          <div className="gallery-image-container">
                             {loadState === 'error' ? (
                               <div className="gallery-error">
                                 <i className="fas fa-exclamation-triangle"></i>
@@ -671,125 +652,6 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           made with <span>💜</span> by Nikko Mission
         </div>
       </Card>
-
-      {/* Gallery Modal */}
-      {showGalleryModal && profile?.gallery && (
-        <div className="gallery-modal-overlay" onClick={() => {
-          setShowGalleryModal(false);
-          onLogAction(card._id, {
-            type: 'gallery_modal_close_overlay',
-            label: 'Closed gallery modal (overlay)',
-            url: ''
-          });
-        }}>
-          <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="gallery-modal-close"
-              onClick={() => {
-                setShowGalleryModal(false);
-                onLogAction(card._id, {
-                  type: 'gallery_modal_close_button',
-                  label: 'Closed gallery modal (X button)',
-                  url: ''
-                });
-              }}
-            >
-              ×
-            </button>
-            {(() => {
-              const currentItem = profile.gallery[galleryIndex];
-              
-              // Get the correct URL for Cloudinary or legacy data
-              const getCurrentItemUrl = () => {
-                if (!currentItem) return null;
-                
-                // If it's Cloudinary data, use secureUrl or url
-                if (currentItem.secureUrl) {
-                  return currentItem.secureUrl;
-                } else if (currentItem.url && currentItem.url.startsWith('https://')) {
-                  return currentItem.url;
-                } else if (currentItem.url && currentItem.url.startsWith('http://')) {
-                  // Convert HTTP to HTTPS for Cloudinary URLs
-                  return currentItem.url.replace('http://', 'https://');
-                } else if (currentItem.url) {
-                  return currentItem.url;
-                } else if (currentItem.data) {
-                  // Legacy base64 data
-                  return `data:image/jpeg;base64,${currentItem.data}`;
-                }
-                return null;
-              };
-              
-              const currentItemUrl = getCurrentItemUrl();
-              const isVideo = isVideoUrl(currentItemUrl);
-              
-              return isVideo ? (
-                <div className="gallery-modal-video">
-                  {currentItemUrl?.includes('cloudinary.com') ? (
-                    // Cloudinary video - use video element
-                    <video
-                      src={currentItemUrl}
-                      controls
-                      autoPlay
-                      className="gallery-modal-video-element"
-                      title={`Gallery ${galleryIndex + 1}`}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    // External video (YouTube, etc.) - use iframe
-                    <iframe
-                      src={currentItemUrl}
-                      title={`Gallery ${galleryIndex + 1}`}
-                      className="gallery-modal-video-frame"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  )}
-                </div>
-              ) : (
-                <img
-                  src={currentItemUrl}
-                  alt={`Gallery ${galleryIndex + 1}`}
-                  className="gallery-modal-image"
-                />
-              );
-            })()}
-            <div className="gallery-modal-nav">
-              <button
-                onClick={() => {
-                  const newIndex = Math.max(0, galleryIndex - 1);
-                  setGalleryIndex(newIndex);
-                  onLogAction(card._id, {
-                    type: 'gallery_navigation',
-                    label: `Navigated to gallery item ${newIndex + 1}`,
-                    url: profile?.gallery?.[newIndex]?.url || ''
-                  });
-                }}
-                disabled={galleryIndex === 0}
-              >
-                ‹
-              </button>
-              <span>{galleryIndex + 1} / {profile.gallery.length}</span>
-              <button
-                onClick={() => {
-                  const newIndex = Math.min(profile.gallery.length - 1, galleryIndex + 1);
-                  setGalleryIndex(newIndex);
-                  onLogAction(card._id, {
-                    type: 'gallery_navigation',
-                    label: `Navigated to gallery item ${newIndex + 1}`,
-                    url: profile?.gallery?.[newIndex]?.url || ''
-                  });
-                }}
-                disabled={galleryIndex === profile.gallery.length - 1}
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
