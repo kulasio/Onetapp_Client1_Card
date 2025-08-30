@@ -145,18 +145,27 @@ body {
   gap: 2rem;
   width: 100%;
   margin-bottom: 1.1rem;
+  max-width: none; /* Remove any max-width constraints */
+}
+
+/* Ensure gallery uses full card width */
+.business-card .gallery-grid {
+  max-width: 100%;
+  width: 100%;
 }
 
 .gallery-item {
   display: flex;
   gap: 1.5rem;
-  align-items: flex-start; /* Changed from center to flex-start */
+  align-items: flex-start;
   padding: 1rem;
   background: #f8fafc;
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
-  min-height: 150px; /* Ensure minimum height */
+  min-height: 150px;
+  width: 100%; /* Ensure full width */
+  max-width: none; /* Remove any max-width constraints */
 }
 
 .gallery-item:hover {
