@@ -297,6 +297,16 @@ body {
     grid-template-areas: "text image" !important; /* Text left, image right */
   }
   
+  /* Force even-numbered items (index 1, 3, 5...) to have text on left */
+  .gallery-item:nth-child(even) {
+    grid-template-areas: "text image" !important; /* Text left, image right */
+  }
+  
+  /* Force odd-numbered items (index 0, 2, 4...) to have image on left */
+  .gallery-item:nth-child(odd) {
+    grid-template-areas: "image text" !important; /* Image left, text right */
+  }
+  
   /* Assign grid areas */
   .gallery-item.image-left .gallery-image-container {
     grid-area: image !important;
@@ -363,6 +373,16 @@ body {
   
   .gallery-item.text-left {
     grid-template-areas: "text image" !important; /* Text left, image right */
+  }
+  
+  /* Force even-numbered items (index 1, 3, 5...) to have text on left */
+  .gallery-item:nth-child(even) {
+    grid-template-areas: "text image" !important; /* Text left, image right */
+  }
+  
+  /* Force odd-numbered items (index 0, 2, 4...) to have image on left */
+  .gallery-item:nth-child(odd) {
+    grid-template-areas: "image text" !important; /* Image left, text right */
   }
   
   /* Assign grid areas for small mobile */
