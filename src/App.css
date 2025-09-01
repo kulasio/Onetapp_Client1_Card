@@ -281,33 +281,24 @@ body {
 /* Responsive Gallery Layout */
 @media (max-width: 768px) {
   .gallery-item {
-    flex-direction: column !important;
+    flex-direction: row !important; /* Keep horizontal layout on mobile */
     gap: 1rem;
-    text-align: center;
+    text-align: left;
     align-items: center !important;
   }
   
-  /* Maintain alternating layout on mobile by reordering elements */
+  /* Maintain alternating layout on mobile */
   .gallery-item.image-left {
-    flex-direction: column !important; /* Image above text */
+    flex-direction: row !important; /* Image left, text right */
   }
   
   .gallery-item.text-left {
-    flex-direction: column !important; /* Text above image */
-  }
-  
-  /* For text-left items, reorder the visual elements to maintain alternating pattern */
-  .gallery-item.text-left .gallery-content {
-    order: -1 !important; /* Move text to top */
-  }
-  
-  .gallery-item.text-left .gallery-image-container {
-    order: 1 !important; /* Move image to bottom */
+    flex-direction: row-reverse !important; /* Text left, image right */
   }
   
   .gallery-image-container {
-    max-width: 100% !important;
-    min-width: auto !important;
+    max-width: 120px !important; /* Smaller width for mobile */
+    min-width: 120px !important;
     height: 120px !important; /* Smaller height for mobile */
     flex: none !important; /* Prevent flexbox from affecting size */
   }
@@ -320,8 +311,8 @@ body {
   }
   
   .gallery-content {
-    width: 100% !important;
-    flex: none !important; /* Prevent flexbox from affecting size */
+    flex: 1 !important;
+    min-width: 0 !important;
   }
   
   .gallery-title {
@@ -342,24 +333,24 @@ body {
     gap: 0.8rem;
   }
   
-  /* Force mobile layout for all items */
-  .business-card .gallery-grid .gallery-item {
-    flex-direction: column !important;
+  /* Maintain horizontal alternating layout on small mobile */
+  .gallery-item {
+    flex-direction: row !important;
     align-items: center !important;
   }
   
-  /* Maintain alternating layout on small mobile */
-  .gallery-item.text-left .gallery-content {
-    order: -1 !important; /* Move text to top */
+  .gallery-item.image-left {
+    flex-direction: row !important; /* Image left, text right */
   }
   
-  .gallery-item.text-left .gallery-image-container {
-    order: 1 !important; /* Move image to bottom */
+  .gallery-item.text-left {
+    flex-direction: row-reverse !important; /* Text left, image right */
   }
   
   .gallery-image-container {
     height: 100px !important;
-    max-width: 100% !important;
+    max-width: 100px !important;
+    min-width: 100px !important;
     flex: none !important;
   }
   
@@ -370,8 +361,8 @@ body {
   }
   
   .gallery-content {
-    width: 100% !important;
-    flex: none !important;
+    flex: 1 !important;
+    min-width: 0 !important;
   }
   
   .gallery-title {
