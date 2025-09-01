@@ -286,6 +286,24 @@ body {
     text-align: center;
   }
   
+  /* Maintain alternating layout on mobile by reordering elements */
+  .gallery-item.image-left {
+    flex-direction: column !important; /* Image above text */
+  }
+  
+  .gallery-item.text-left {
+    flex-direction: column !important; /* Text above image */
+  }
+  
+  /* For text-left items, reorder the visual elements */
+  .gallery-item.text-left .gallery-content {
+    order: -1; /* Move text to top */
+  }
+  
+  .gallery-item.text-left .gallery-image-container {
+    order: 1; /* Move image to bottom */
+  }
+  
   .gallery-image-container {
     max-width: 100%;
     min-width: auto;
@@ -315,6 +333,15 @@ body {
   .gallery-item {
     padding: 0.8rem;
     gap: 0.8rem;
+  }
+  
+  /* Maintain alternating layout on small mobile */
+  .gallery-item.text-left .gallery-content {
+    order: -1; /* Move text to top */
+  }
+  
+  .gallery-item.text-left .gallery-image-container {
+    order: 1; /* Move image to bottom */
   }
   
   .gallery-image-container {
