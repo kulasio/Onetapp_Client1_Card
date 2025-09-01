@@ -3,6 +3,7 @@ import { Card, Button } from 'react-bootstrap';
 
 const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAction }) => {
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   const { card, user, profile } = cardData || {};
 
@@ -181,6 +182,39 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     }
   };
 
+  // Handle description expansion
+  const toggleDescription = (itemIndex) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [itemIndex]: !prev[itemIndex]
+    }));
+    onLogAction(card._id, {
+      type: expandedDescriptions[itemIndex] ? 'gallery_description_collapsed' : 'gallery_description_expanded',
+      label: expandedDescriptions[itemIndex] ? 'Collapsed gallery description' : 'Expanded gallery description',
+      url: ''
+    });
+  };
+
+  // Format description text with truncation
+  const formatDescriptionText = (text, itemIndex) => {
+    if (!text) return '';
+    
+    const maxLength = 120; // Characters to show before truncation
+    const shouldTruncate = text.length > maxLength;
+    
+    if (!shouldTruncate) return text;
+    
+    if (expandedDescriptions[itemIndex]) {
+      return text;
+    } else {
+      // Find the last complete word within the limit
+      const truncated = text.substring(0, maxLength);
+      const lastSpaceIndex = truncated.lastIndexOf(' ');
+      const finalText = lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) : truncated;
+      return finalText + '...';
+    }
+  };
+
 
 
 
@@ -325,7 +359,139 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             )}
           </div>
           
-          
+          {/* Gallery */}
+          {profile?.gallery && profile.gallery.length > 0 && (
+            <>
+              <div className="card-section-label">Gallery</div>
+              <div className="gallery-grid mb-3">
+                {profile.gallery.map((item, index) => {
+                  // Get the correct URL for Cloudinary or legacy data
+                  const getItemUrl = () => {
+                    if (item.secureUrl) {
+                      return item.secureUrl;
+                    } else if (item.url && item.url.startsWith('https://')) {
+                      return item.url;
+                    } else if (item.url && item.url.startsWith('http://')) {
+                      // Convert HTTP to HTTPS for Cloudinary URLs
+                      return item.url.replace('http://', 'https://');
+                    } else if (item.url) {
+                      return item.url;
+                    } else if (item.data) {
+                      // Legacy base64 data
+                      return `data:image/jpeg;base64,${item.data}`;
+                    }
+                    return null;
+                  };
+                  
+                  const itemUrl = getItemUrl();
+                  const layout = index % 2 === 0 ? 'image-left' : 'text-left';
+                  const isImageLeft = layout === 'image-left';
+                  
+                  return (
+                    <div key={index} className={`gallery-item ${layout}`}>
+                      {isImageLeft ? (
+                        <>
+                          {/* Image First */}
+                          <div className="gallery-image-container">
+                            {itemUrl ? (
+                              <img
+                                src={itemUrl}
+                                alt={item.title || `Gallery ${index + 1}`}
+                                className="gallery-image"
+                              />
+                            ) : (
+                              <div className="gallery-error">
+                                <i className="fas fa-exclamation-triangle"></i>
+                                <span>No image</span>
+                              </div>
+                              )}
+                          </div>
+                          {/* Text Content Second */}
+                          <div className="gallery-content">
+                            <h4 className="gallery-title">
+                              {item.title || `Gallery Item ${index + 1}`}
+                            </h4>
+                            <div className="gallery-description">
+                              <span>
+                                {formatDescriptionText(
+                                  item.description || 'No description available for this gallery item.', 
+                                  index
+                                )}
+                              </span>
+                              {(item.description || 'No description available for this gallery item.').length > 120 && (
+                                <button
+                                  className="view-more-btn"
+                                  onClick={() => toggleDescription(index)}
+                                >
+                                  {expandedDescriptions[index] ? (
+                                    <>
+                                      view less <i className="fas fa-chevron-up"></i>
+                                    </>
+                                  ) : (
+                                    <>
+                                      view more <i className="fas fa-chevron-down"></i>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Text Content First */}
+                          <div className="gallery-content">
+                            <h4 className="gallery-title">
+                              {item.title || `Gallery Item ${index + 1}`}
+                            </h4>
+                            <div className="gallery-description">
+                              <span>
+                                {formatDescriptionText(
+                                  item.description || 'No description available for this gallery item.', 
+                                  index
+                                )}
+                              </span>
+                              {(item.description || 'No description available for this gallery item.').length > 120 && (
+                                <button
+                                  className="view-more-btn"
+                                  onClick={() => toggleDescription(index)}
+                                >
+                                  {expandedDescriptions[index] ? (
+                                    <>
+                                      view less <i className="fas fa-chevron-up"></i>
+                                    </>
+                                  ) : (
+                                    <>
+                                      view more <i className="fas fa-chevron-down"></i>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {/* Image Second */}
+                          <div className="gallery-image-container">
+                            {itemUrl ? (
+                              <img
+                                src={itemUrl}
+                                alt={item.title || `Gallery ${index + 1}`}
+                                className="gallery-image"
+                              />
+                            ) : (
+                              <div className="gallery-error">
+                                <i className="fas fa-exclamation-triangle"></i>
+                                <span>No image</span>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </Card.Body>
         
         {/* Footer */}
