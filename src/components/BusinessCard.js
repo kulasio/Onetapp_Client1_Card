@@ -475,6 +475,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 className="social-link"
               >
                 <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+                <span className="platform-name">{link.platform}</span>
               </a>
             ))}
             {getSocialLinks().length > 3 && (
