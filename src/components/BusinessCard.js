@@ -248,42 +248,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             {profile?.location || ''}
           </div>
           
-          {/* Social Links */}
-          <div className="card-social mb-3">
-            {getSocialLinks().slice(0, 3).map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handleSocialClick(link.platform, link.url)}
-                className="social-link"
-              >
-                <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
-              </a>
-            ))}
-            {getSocialLinks().length > 3 && (
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => {
-                  // Show all social links in a modal or expand the section
-                  const allLinks = getSocialLinks();
-                  allLinks.forEach(link => {
-                    window.open(link.url, '_blank');
-                  });
-                  onLogAction(card._id, {
-                    type: 'view_all_social',
-                    label: 'Viewed all social links',
-                    url: ''
-                  });
-                }}
-                className="social-view-all-btn"
-              >
-                +{getSocialLinks().length - 3} more
-              </Button>
-            )}
-          </div>
+
           
           {/* Action Buttons */}
           <div className="d-flex gap-3 mb-4">
@@ -496,11 +461,49 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               </div>
             </>
           )}
+          
+          {/* Social Links */}
+          <div className="card-section-label">Social Media</div>
+          <div className="card-social mb-3">
+            {getSocialLinks().slice(0, 3).map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handleSocialClick(link.platform, link.url)}
+                className="social-link"
+              >
+                <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+              </a>
+            ))}
+            {getSocialLinks().length > 3 && (
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={() => {
+                  // Show all social links in a modal or expand the section
+                  const allLinks = getSocialLinks();
+                  allLinks.forEach(link => {
+                    window.open(link.url, '_blank');
+                  });
+                  onLogAction(card._id, {
+                    type: 'view_all_social',
+                    label: 'Viewed all social links',
+                    url: ''
+                  });
+                }}
+                className="social-view-all-btn"
+              >
+                +{getSocialLinks().length - 3} more
+              </Button>
+            )}
+          </div>
         </Card.Body>
         
         {/* Footer */}
         <div className="text-center mt-4 mb-3" style={{ color: '#888', fontSize: '1rem', letterSpacing: '0.01em' }}>
-          made with <span>💜</span> by Nikko Mission
+          powered by onetapp
         </div>
       </Card>
     </>
