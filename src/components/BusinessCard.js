@@ -143,61 +143,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
-  // Check if URL is a video (Cloudinary only)
-  const isVideoUrl = (url) => {
-    if (!url) return false;
-    
-    // Detect Cloudinary video URLs
-    if (url.includes('cloudinary.com') && url.includes('/video/')) {
-      return true;
-    }
-    
-    // Detect YouTube URLs
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return true;
-    }
-    
-    // Detect Vimeo URLs
-    if (url.includes('vimeo.com')) {
-      return true;
-    }
-    
-    // Check for video file extensions
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
-    const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
-    
-    return hasVideoExtension;
-  };
 
-  // Get video URL for preview
-  const getVideoUrl = (item) => {
-    if (!item) return null;
-    
-    // For Cloudinary videos using secureUrl
-    if (item.secureUrl && item.secureUrl.includes('cloudinary.com')) {
-      let secureUrl = item.secureUrl;
-      if (secureUrl.startsWith('http://')) {
-        secureUrl = secureUrl.replace('http://', 'https://');
-      }
-      return secureUrl;
-    }
-    
-    // For Cloudinary videos using url field
-    if (item.url && item.url.includes('cloudinary.com')) {
-      let secureUrl = item.url;
-      if (secureUrl.startsWith('http://')) {
-        secureUrl = secureUrl.replace('http://', 'https://');
-      }
-      return secureUrl;
-    }
-    
-    // For external video URLs (YouTube, Vimeo, etc.)
-    if (item.url && (item.url.startsWith('http://') || item.url.startsWith('https://'))) {
-      return item.url;
-    }
-    
-    return null;
-  };
 
 
 
