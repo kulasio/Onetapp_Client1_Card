@@ -152,6 +152,8 @@ body {
 .business-card .gallery-grid {
   max-width: 100%;
   width: 100%;
+  margin: 0 -1rem; /* Break out of card padding */
+  padding: 0 1rem;
 }
 
 .gallery-item {
@@ -166,6 +168,7 @@ body {
   min-height: 150px;
   width: 100%; /* Ensure full width */
   max-width: none; /* Remove any max-width constraints */
+  margin-bottom: 1rem; /* Add spacing between items */
 }
 
 .gallery-item:hover {
@@ -175,11 +178,11 @@ body {
 }
 
 .gallery-item.image-left {
-  flex-direction: row; /* Image left, text right */
+  flex-direction: row !important; /* Image left, text right */
 }
 
 .gallery-item.text-left {
-  flex-direction: row-reverse; /* Text left, image right */
+  flex-direction: row-reverse !important; /* Text left, image right */
 }
 
 /* Ensure proper spacing and alignment */
@@ -279,12 +282,12 @@ body {
   .gallery-image-container {
     max-width: 100%;
     min-width: auto;
+    height: 120px !important; /* Smaller height for mobile */
   }
   
-  .gallery-image,
-  .gallery-image-container video {
-    height: 200px !important;
-    max-height: 200px !important;
+  .gallery-image {
+    height: 120px !important;
+    max-height: 120px !important;
   }
   
   .gallery-content {
@@ -297,6 +300,31 @@ body {
   
   .gallery-description {
     font-size: 0.9rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .gallery-item {
+    padding: 0.8rem;
+    gap: 0.8rem;
+  }
+  
+  .gallery-image-container {
+    height: 100px !important;
+  }
+  
+  .gallery-image {
+    height: 100px !important;
+    max-height: 100px !important;
+  }
+  
+  .gallery-title {
+    font-size: 0.9rem;
+  }
+  
+  .gallery-description {
+    font-size: 0.8rem;
   }
 }
 

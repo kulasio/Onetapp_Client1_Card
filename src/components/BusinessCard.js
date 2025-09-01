@@ -387,8 +387,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   const layout = index % 2 === 0 ? 'image-left' : 'text-left';
                   const isImageLeft = layout === 'image-left';
                   
-                  // Debug: Log the layout for each item
-                  console.log(`Gallery item ${index}: layout = ${layout}, isImageLeft = ${isImageLeft}`);
+
                   
                   return (
                     <div key={index} className={`gallery-item ${layout}`}>
