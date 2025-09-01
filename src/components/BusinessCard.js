@@ -465,7 +465,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Social Links */}
           <div className="card-section-label">Social Media</div>
           <div className="card-social mb-3">
-            {getSocialLinks().slice(0, 3).map((link, index) => (
+            {getSocialLinks().slice(0, 5).map((link, index) => (
               <a
                 key={index}
                 href={link.url}
@@ -478,7 +478,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 <span className="platform-name">{link.platform}</span>
               </a>
             ))}
-            {getSocialLinks().length > 3 && (
+            {getSocialLinks().length > 5 && (
               <Button
                 variant="outline-secondary"
                 size="sm"
@@ -496,7 +496,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 }}
                 className="social-view-all-btn"
               >
-                +{getSocialLinks().length - 3} more
+                +{getSocialLinks().length - 5} more
               </Button>
             )}
           </div>
