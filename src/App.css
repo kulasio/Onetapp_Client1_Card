@@ -296,6 +296,15 @@ body {
     flex-direction: row-reverse !important; /* Text left, image right */
   }
   
+  /* Force the alternating layout to work */
+  .gallery-item.text-left .gallery-content {
+    order: -1 !important; /* Ensure text comes first */
+  }
+  
+  .gallery-item.text-left .gallery-image-container {
+    order: 1 !important; /* Ensure image comes second */
+  }
+  
   .gallery-image-container {
     max-width: 120px !important; /* Smaller width for mobile */
     min-width: 120px !important;
@@ -345,6 +354,15 @@ body {
   
   .gallery-item.text-left {
     flex-direction: row-reverse !important; /* Text left, image right */
+  }
+  
+  /* Force the alternating layout to work on small mobile */
+  .gallery-item.text-left .gallery-content {
+    order: -1 !important; /* Ensure text comes first */
+  }
+  
+  .gallery-item.text-left .gallery-image-container {
+    order: 1 !important; /* Ensure image comes second */
   }
   
   .gallery-image-container {
