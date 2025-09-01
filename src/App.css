@@ -340,6 +340,15 @@ body {
   .gallery-description {
     font-size: 0.9rem;
   }
+  
+  /* Additional specificity to ensure nth-child rules take precedence */
+  .business-card .gallery-grid .gallery-item:nth-child(even) {
+    grid-template-areas: "text image" !important;
+  }
+  
+  .business-card .gallery-grid .gallery-item:nth-child(odd) {
+    grid-template-areas: "image text" !important;
+  }
 }
 
 
@@ -416,6 +425,15 @@ body {
   
   .gallery-description {
     font-size: 0.8rem;
+  }
+  
+  /* Additional specificity to ensure nth-child rules take precedence */
+  .business-card .gallery-grid .gallery-item:nth-child(even) {
+    grid-template-areas: "text image" !important;
+  }
+  
+  .business-card .gallery-grid .gallery-item:nth-child(odd) {
+    grid-template-areas: "image text" !important;
   }
 }
 
