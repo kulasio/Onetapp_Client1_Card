@@ -177,23 +177,17 @@ body {
   background: #fff;
 }
 
-.gallery-item.image-left {
-  flex-direction: row !important; /* Image left, text right */
+.gallery-item {
+  flex-direction: row; /* Default: left to right */
 }
 
-.gallery-item.text-left {
-  flex-direction: row-reverse !important; /* Text left, image right */
-}
-
-/* Force the layout with more specific selectors */
+/* Debug styling to show which items are which */
 .business-card .gallery-grid .gallery-item.image-left {
-  flex-direction: row !important;
   background: rgba(0, 255, 0, 0.2) !important; /* Debug: More visible green background */
   border: 2px solid green !important; /* Debug: Green border */
 }
 
 .business-card .gallery-grid .gallery-item.text-left {
-  flex-direction: row-reverse !important;
   background: rgba(255, 0, 0, 0.2) !important; /* Debug: More visible red background */
   border: 2px solid red !important; /* Debug: Red border */
 }

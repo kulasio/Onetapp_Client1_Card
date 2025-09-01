@@ -406,7 +406,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                 <i className="fas fa-exclamation-triangle"></i>
                                 <span>No image</span>
                               </div>
-                              )}
+                            )}
                           </div>
                           {/* Text Content Second */}
                           <div className="gallery-content">
