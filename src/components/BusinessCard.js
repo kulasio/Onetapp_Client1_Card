@@ -384,8 +384,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   };
                   
                   const itemUrl = getItemUrl();
+                  // Even numbers (index 1, 3, 5...) should have text on left
+                  // Odd numbers (index 0, 2, 4...) should have image on left
                   const layout = index % 2 === 0 ? 'image-left' : 'text-left';
-                  const isImageLeft = layout === 'image-left';
+                  const isImageLeft = index % 2 === 0; // Even index = image left, odd index = text left
                   
 
                   

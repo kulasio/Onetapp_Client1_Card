@@ -181,16 +181,7 @@ body {
   flex-direction: row; /* Default: left to right */
 }
 
-/* Debug styling to show which items are which */
-.business-card .gallery-grid .gallery-item.image-left {
-  background: rgba(0, 255, 0, 0.2) !important; /* Debug: More visible green background */
-  border: 2px solid green !important; /* Debug: Green border */
-}
-
-.business-card .gallery-grid .gallery-item.text-left {
-  background: rgba(255, 0, 0, 0.2) !important; /* Debug: More visible red background */
-  border: 2px solid red !important; /* Debug: Red border */
-}
+/* Debug styling removed - layout should work correctly now */
 
 /* Ensure proper spacing and alignment */
 .gallery-item > * {
