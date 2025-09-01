@@ -185,6 +185,19 @@ body {
   flex-direction: row-reverse !important; /* Text left, image right */
 }
 
+/* Force the layout with more specific selectors */
+.business-card .gallery-grid .gallery-item.image-left {
+  flex-direction: row !important;
+  background: rgba(0, 255, 0, 0.2) !important; /* Debug: More visible green background */
+  border: 2px solid green !important; /* Debug: Green border */
+}
+
+.business-card .gallery-grid .gallery-item.text-left {
+  flex-direction: row-reverse !important;
+  background: rgba(255, 0, 0, 0.2) !important; /* Debug: More visible red background */
+  border: 2px solid red !important; /* Debug: Red border */
+}
+
 /* Ensure proper spacing and alignment */
 .gallery-item > * {
   flex: 1;
