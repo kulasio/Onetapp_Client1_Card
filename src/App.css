@@ -287,12 +287,6 @@ body {
     align-items: center !important;
   }
   
-  /* Force mobile layout for all items */
-  .business-card .gallery-grid .gallery-item {
-    flex-direction: column !important;
-    align-items: center !important;
-  }
-  
   /* Maintain alternating layout on mobile by reordering elements */
   .gallery-item.image-left {
     flex-direction: column !important; /* Image above text */
@@ -302,7 +296,7 @@ body {
     flex-direction: column !important; /* Text above image */
   }
   
-  /* For text-left items, reorder the visual elements */
+  /* For text-left items, reorder the visual elements to maintain alternating pattern */
   .gallery-item.text-left .gallery-content {
     order: -1 !important; /* Move text to top */
   }
@@ -339,24 +333,7 @@ body {
   }
 }
 
-/* Additional mobile override to ensure layout works */
-@media (max-width: 768px) {
-  .gallery-grid {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  .gallery-item {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-  }
-  
-  .gallery-item > * {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
+
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
