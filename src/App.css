@@ -284,6 +284,13 @@ body {
     flex-direction: column !important;
     gap: 1rem;
     text-align: center;
+    align-items: center !important;
+  }
+  
+  /* Force mobile layout for all items */
+  .business-card .gallery-grid .gallery-item {
+    flex-direction: column !important;
+    align-items: center !important;
   }
   
   /* Maintain alternating layout on mobile by reordering elements */
@@ -297,26 +304,30 @@ body {
   
   /* For text-left items, reorder the visual elements */
   .gallery-item.text-left .gallery-content {
-    order: -1; /* Move text to top */
+    order: -1 !important; /* Move text to top */
   }
   
   .gallery-item.text-left .gallery-image-container {
-    order: 1; /* Move image to bottom */
+    order: 1 !important; /* Move image to bottom */
   }
   
   .gallery-image-container {
-    max-width: 100%;
-    min-width: auto;
+    max-width: 100% !important;
+    min-width: auto !important;
     height: 120px !important; /* Smaller height for mobile */
+    flex: none !important; /* Prevent flexbox from affecting size */
   }
   
   .gallery-image {
     height: 120px !important;
     max-height: 120px !important;
+    width: 100% !important;
+    object-fit: cover !important;
   }
   
   .gallery-content {
-    width: 100%;
+    width: 100% !important;
+    flex: none !important; /* Prevent flexbox from affecting size */
   }
   
   .gallery-title {
@@ -328,6 +339,25 @@ body {
   }
 }
 
+/* Additional mobile override to ensure layout works */
+@media (max-width: 768px) {
+  .gallery-grid {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .gallery-item {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .gallery-item > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   .gallery-item {
@@ -335,22 +365,36 @@ body {
     gap: 0.8rem;
   }
   
+  /* Force mobile layout for all items */
+  .business-card .gallery-grid .gallery-item {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
   /* Maintain alternating layout on small mobile */
   .gallery-item.text-left .gallery-content {
-    order: -1; /* Move text to top */
+    order: -1 !important; /* Move text to top */
   }
   
   .gallery-item.text-left .gallery-image-container {
-    order: 1; /* Move image to bottom */
+    order: 1 !important; /* Move image to bottom */
   }
   
   .gallery-image-container {
     height: 100px !important;
+    max-width: 100% !important;
+    flex: none !important;
   }
   
   .gallery-image {
     height: 100px !important;
     max-height: 100px !important;
+    width: 100% !important;
+  }
+  
+  .gallery-content {
+    width: 100% !important;
+    flex: none !important;
   }
   
   .gallery-title {
