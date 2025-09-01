@@ -281,35 +281,44 @@ body {
 /* Responsive Gallery Layout */
 @media (max-width: 768px) {
   .gallery-item {
-    flex-direction: row !important; /* Keep horizontal layout on mobile */
+    display: grid !important; /* Use CSS Grid for mobile */
+    grid-template-columns: 1fr 1fr !important; /* Two equal columns */
     gap: 1rem;
     text-align: left;
     align-items: center !important;
   }
   
-  /* Maintain alternating layout on mobile */
+  /* Maintain alternating layout on mobile using grid */
   .gallery-item.image-left {
-    flex-direction: row !important; /* Image left, text right */
+    grid-template-areas: "image text" !important; /* Image left, text right */
   }
   
   .gallery-item.text-left {
-    flex-direction: row-reverse !important; /* Text left, image right */
+    grid-template-areas: "text image" !important; /* Text left, image right */
   }
   
-  /* Force the alternating layout to work */
-  .gallery-item.text-left .gallery-content {
-    order: -1 !important; /* Ensure text comes first */
+  /* Assign grid areas */
+  .gallery-item.image-left .gallery-image-container {
+    grid-area: image !important;
+  }
+  
+  .gallery-item.image-left .gallery-content {
+    grid-area: text !important;
   }
   
   .gallery-item.text-left .gallery-image-container {
-    order: 1 !important; /* Ensure image comes second */
+    grid-area: image !important;
+  }
+  
+  .gallery-item.text-left .gallery-content {
+    grid-area: text !important;
   }
   
   .gallery-image-container {
     max-width: 120px !important; /* Smaller width for mobile */
     min-width: 120px !important;
     height: 120px !important; /* Smaller height for mobile */
-    flex: none !important; /* Prevent flexbox from affecting size */
+    justify-self: center !important;
   }
   
   .gallery-image {
@@ -320,8 +329,7 @@ body {
   }
   
   .gallery-content {
-    flex: 1 !important;
-    min-width: 0 !important;
+    justify-self: start !important;
   }
   
   .gallery-title {
@@ -342,34 +350,43 @@ body {
     gap: 0.8rem;
   }
   
-  /* Maintain horizontal alternating layout on small mobile */
+  /* Maintain alternating layout on small mobile using grid */
   .gallery-item {
-    flex-direction: row !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     align-items: center !important;
   }
   
   .gallery-item.image-left {
-    flex-direction: row !important; /* Image left, text right */
+    grid-template-areas: "image text" !important; /* Image left, text right */
   }
   
   .gallery-item.text-left {
-    flex-direction: row-reverse !important; /* Text left, image right */
+    grid-template-areas: "text image" !important; /* Text left, image right */
   }
   
-  /* Force the alternating layout to work on small mobile */
-  .gallery-item.text-left .gallery-content {
-    order: -1 !important; /* Ensure text comes first */
+  /* Assign grid areas for small mobile */
+  .gallery-item.image-left .gallery-image-container {
+    grid-area: image !important;
+  }
+  
+  .gallery-item.image-left .gallery-content {
+    grid-area: text !important;
   }
   
   .gallery-item.text-left .gallery-image-container {
-    order: 1 !important; /* Ensure image comes second */
+    grid-area: image !important;
+  }
+  
+  .gallery-item.text-left .gallery-content {
+    grid-area: text !important;
   }
   
   .gallery-image-container {
     height: 100px !important;
     max-width: 100px !important;
     min-width: 100px !important;
-    flex: none !important;
+    justify-self: center !important;
   }
   
   .gallery-image {
@@ -379,8 +396,7 @@ body {
   }
   
   .gallery-content {
-    flex: 1 !important;
-    min-width: 0 !important;
+    justify-self: start !important;
   }
   
   .gallery-title {
