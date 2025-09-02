@@ -169,14 +169,14 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             document.body.removeChild(a);
           } else {
             const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
             link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
           }
         }
 
@@ -339,9 +339,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         <Card.Body>
           {/* Name */}
           {isFieldVisible('fullName') && (
-            <Card.Title className="mb-1 fw-bold">
-              {profile?.fullName || user?.username || ''}
-            </Card.Title>
+          <Card.Title className="mb-1 fw-bold">
+            {profile?.fullName || user?.username || ''}
+          </Card.Title>
           )}
           
           {/* Title */}
@@ -353,16 +353,16 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           
           {/* Company */}
           {isFieldVisible('company') && profile?.company && (
-            <div className="mb-1 text-secondary">
+          <div className="mb-1 text-secondary">
               {profile.company}
-            </div>
+          </div>
           )}
           
           {/* Location */}
           {isFieldVisible('location') && profile?.contact?.location && (
-            <div className="mb-3 text-muted">
+          <div className="mb-3 text-muted">
               {profile.contact.location}
-            </div>
+          </div>
           )}
           
 
@@ -385,38 +385,38 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Bio */}
           {isFieldVisible('bio') && profile?.bio && (
             <>
-              <div className="card-section-label">Bio</div>
-              <div className="mb-3">
-                <div className="bio-text">
+          <div className="card-section-label">Bio</div>
+          <div className="mb-3">
+            <div className="bio-text">
                   {formatBioText(profile.bio)}
-                </div>
+            </div>
                 {profile.bio.length > 150 && (
-                  <button
-                    className="bio-toggle-btn"
-                    onClick={handleBioToggle}
-                  >
-                    {bioExpanded ? (
-                      <>
-                        <i className="fas fa-chevron-up"></i>
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <i className="fas fa-chevron-down"></i>
-                        Read More
-                      </>
-                    )}
-                  </button>
+              <button
+                className="bio-toggle-btn"
+                onClick={handleBioToggle}
+              >
+                {bioExpanded ? (
+                  <>
+                    <i className="fas fa-chevron-up"></i>
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-chevron-down"></i>
+                    Read More
+                  </>
                 )}
-              </div>
+              </button>
+            )}
+          </div>
             </>
           )}
           
           {/* Featured Links */}
           {hasVisibleContent('featuredLinks') && (
             <>
-              <div className="card-section-label">Featured</div>
-              <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
+          <div className="card-section-label">Featured</div>
+          <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
             {profile?.featuredLinks?.slice(0, 3).map((link, index) => (
               <a
                 key={index}
@@ -445,7 +445,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 +{profile.featuredLinks.length - 3} more
               </Button>
             )}
-              </div>
+          </div>
             </>
           )}
           
@@ -499,8 +499,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                 style={{ cursor: 'pointer' }}
                               />
                             ) : (
-                              <div className="gallery-error">
-                                <i className="fas fa-exclamation-triangle"></i>
+                          <div className="gallery-error">
+                            <i className="fas fa-exclamation-triangle"></i>
                                 <span>No image</span>
                               </div>
                             )}
@@ -534,10 +534,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                 </button>
                               )}
                             </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
+                                </div>
+                              </>
+                            ) : (
+                              <>
                           {/* Text Content First */}
                           <div className="gallery-content">
                             <h4 className="gallery-title">
@@ -570,23 +570,23 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           </div>
                           {/* Image Second */}
                           <div className="gallery-image-container">
-                            {itemUrl ? (
-                              <img
-                                src={itemUrl}
+                                {itemUrl ? (
+                                  <img
+                                    src={itemUrl}
                                 alt={item.title || `Gallery ${index + 1}`}
-                                className="gallery-image"
+                                    className="gallery-image"
                                 onClick={() => handleGalleryItemClick(item, index)}
                                 style={{ cursor: 'pointer' }}
-                              />
-                            ) : (
-                              <div className="gallery-error">
-                                <i className="fas fa-exclamation-triangle"></i>
+                                  />
+                                ) : (
+                                  <div className="gallery-error">
+                                    <i className="fas fa-exclamation-triangle"></i>
                                 <span>No image</span>
-                              </div>
+                                  </div>
                             )}
                           </div>
-                        </>
-                      )}
+                          </>
+                        )}
                     </div>
                   );
                 })}
@@ -622,11 +622,11 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   allLinks.forEach(link => {
                     window.open(link.url, '_blank');
                   });
-                  onLogAction(card._id, {
+          onLogAction(card._id, {
                     type: 'view_all_social',
                     label: 'Viewed all social links',
-                    url: ''
-                  });
+            url: ''
+          });
                 }}
                 className="social-view-all-btn"
               >
@@ -710,8 +710,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               size="sm"
               disabled={!isFieldVisible('email') || !profile?.contact?.email}
               title={!isFieldVisible('email') || !profile?.contact?.email ? 'Email not available' : 'Request a quote'}
-              onClick={() => {
-                onLogAction(card._id, {
+                onClick={() => {
+                  onLogAction(card._id, {
                   type: 'request_quote_click',
                   label: 'Clicked Request Quote',
                   url: ''
@@ -742,7 +742,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   onClick={() => setShowGalleryModal(false)}
                 >
                   <i className="fas fa-times"></i>
-                </button>
+              </button>
               </div>
               <div className="gallery-modal-body">
                 <img 
