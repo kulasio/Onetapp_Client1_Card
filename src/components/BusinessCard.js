@@ -356,14 +356,17 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   // Get the correct URL for Cloudinary or legacy data
                   const getItemUrl = () => {
                     if (item.secureUrl) {
-                      return item.secureUrl;
+                      return item.secureUrl; // Always use secure URL if available
                     } else if (item.url && item.url.startsWith('https://')) {
-                      return item.url;
+                      return item.url; // Already HTTPS
                     } else if (item.url && item.url.startsWith('http://')) {
-                      // Convert HTTP to HTTPS for Cloudinary URLs
+                      // Force upgrade to HTTPS for Cloudinary URLs
                       return item.url.replace('http://', 'https://');
+                    } else if (item.url && !item.url.startsWith('http')) {
+                      // If no protocol specified, assume HTTPS
+                      return `https://${item.url}`;
                     } else if (item.url) {
-                      return item.url;
+                      return item.url; // Fallback for other cases
                     } else if (item.data) {
                       // Legacy base64 data
                       return `data:image/jpeg;base64,${item.data}`;
