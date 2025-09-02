@@ -146,6 +146,23 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
+  // Gallery modal state
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedGalleryItem, setSelectedGalleryItem] = useState(null);
+
+  // Handle gallery item click
+  const handleGalleryItemClick = (item, index) => {
+    setSelectedGalleryItem({ ...item, index });
+    setShowGalleryModal(true);
+    
+    // Track gallery item click
+    onLogAction(card._id, {
+      type: 'gallery_item_click',
+      label: `Clicked gallery item: ${item.title || `Item ${index + 1}`}`,
+      url: item.secureUrl || item.url || ''
+    });
+  };
+
 
 
 
@@ -373,6 +390,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                 src={itemUrl}
                                 alt={item.title || `Gallery ${index + 1}`}
                                 className="gallery-image"
+                                onClick={() => handleGalleryItemClick(item, index)}
+                                style={{ cursor: 'pointer' }}
                               />
                             ) : (
                               <div className="gallery-error">
@@ -451,6 +470,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                                 src={itemUrl}
                                 alt={item.title || `Gallery ${index + 1}`}
                                 className="gallery-image"
+                                onClick={() => handleGalleryItemClick(item, index)}
+                                style={{ cursor: 'pointer' }}
                               />
                             ) : (
                               <div className="gallery-error">
@@ -602,6 +623,35 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </Button>
           </div>
         </Card.Body>
+        
+        {/* Gallery Modal */}
+        {showGalleryModal && selectedGalleryItem && (
+          <div className="gallery-modal-overlay" onClick={() => setShowGalleryModal(false)}>
+            <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="gallery-modal-header">
+                <h4>{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</h4>
+                <button 
+                  className="gallery-modal-close"
+                  onClick={() => setShowGalleryModal(false)}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="gallery-modal-body">
+                <img 
+                  src={selectedGalleryItem.secureUrl || selectedGalleryItem.url || ''} 
+                  alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
+                  className="gallery-modal-image"
+                />
+                {selectedGalleryItem.description && (
+                  <div className="gallery-modal-description">
+                    {selectedGalleryItem.description}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Footer */}
         <div className="text-center mt-4 mb-3" style={{ color: '#888', fontSize: '1rem', letterSpacing: '0.01em' }}>
