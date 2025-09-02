@@ -14,10 +14,31 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
   // Brand color initialization
 
+  // Convert hex color to RGB parts
+  const hexToRgb = (hex) => {
+    if (!hex) return null;
+    let h = hex.trim();
+    if (h.startsWith('#')) h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split('').map((c) => c + c).join('');
+    }
+    const intVal = parseInt(h, 16);
+    if (Number.isNaN(intVal) || (h.length !== 6)) return null;
+    return { r: (intVal >> 16) & 255, g: (intVal >> 8) & 255, b: intVal & 255 };
+  };
+
   useEffect(() => {
     const root = document.documentElement;
     const brandColor = profile?.theme?.brandColor || profile?.brandColor || card?.brandColor || '#0f172a';
     root.style.setProperty('--brand', brandColor);
+    // Align derived brand tints with the selected brand
+    root.style.setProperty('--brand-500', brandColor);
+    root.style.setProperty('--brand-600', brandColor);
+    const rgb = hexToRgb(brandColor);
+    if (rgb) {
+      root.style.setProperty('--brand-600-rgb', `${rgb.r},${rgb.g},${rgb.b}`);
+      root.style.setProperty('--brand-500-rgb', `${rgb.r},${rgb.g},${rgb.b}`);
+    }
   }, [profile, card]);
 
   // Helper function to check if a field should be visible
@@ -444,7 +465,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </Button>
           </div>
           <div className="card-hero-content">
-            <div className="avatar-ring" role="button" onClick={handleProfileClick} title="View profile photo" style={{ cursor: 'pointer' }}>
+            <div className="avatar-ring">
               <img
                 src={getProfileImageUrl()}
                 alt={profile?.fullName || user?.username || 'Profile'}
@@ -455,21 +476,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               {isFieldVisible('fullName') && (
                 <h2 className="name">{profile?.fullName || user?.username || ''}</h2>
               )}
-              <div className="meta">
+              <div className="meta" aria-label="profile meta">
                 {isFieldVisible('jobTitle') && profile?.jobTitle && (
-                  <span className="meta-item">{profile.jobTitle}</span>
+                  <span className="meta-chip chip-title"><i className="fas fa-briefcase"></i>{profile.jobTitle}</span>
                 )}
                 {isFieldVisible('company') && profile?.company && (
-                  <span className="meta-sep">•</span>
-                )}
-                {isFieldVisible('company') && profile?.company && (
-                  <span className="meta-item">{profile.company}</span>
+                  <span className="meta-chip chip-company"><i className="fas fa-building"></i>{profile.company}</span>
                 )}
                 {isFieldVisible('location') && profile?.contact?.location && (
-                  <>
-                    <span className="meta-sep">•</span>
-                    <span className="meta-item">{profile.contact.location}</span>
-                  </>
+                  <span className="meta-chip chip-location"><i className="fas fa-map-marker-alt"></i>{profile.contact.location}</span>
                 )}
               </div>
             </div>
@@ -478,6 +493,29 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         
         <Card.Body>
           {/* identity moved into hero header */}
+          {/* Social Icons - moved to top, no section title */}
+          {hasVisibleContent('socialLinks') && (
+            <div className="mb-3 social-wrap">
+              <div className="social-label">Connect with me</div>
+              <div className="social-row">
+                {getSocialLinks().map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleSocialClick(link.platform, link.url)}
+                    className="social-compact"
+                    style={{ textDecoration: 'none' }}
+                    aria-label={link.platform}
+                    title={link.platform}
+                  >
+                    <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Theme toggle removed as per request */}
 
@@ -643,34 +681,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </div>
           )}
           
-          {/* Social Links - single-row, no slider */}
-          {hasVisibleContent('socialLinks') && (
-            <div className="section-row">
-              <div className="card-section-label">Social Media</div>
-              <div className="section-block">
-                <div
-                  className="mb-2"
-                  style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'nowrap' }}
-                >
-                  {getSocialLinks().map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => handleSocialClick(link.platform, link.url)}
-                      className="action-btn btn-dark pill"
-                      style={{ padding: 0, height: '40px', width: '40px', textDecoration: 'none' }}
-                      aria-label={link.platform}
-                      title={link.platform}
-                    >
-                      <i className={`fab fa-${link.platform.toLowerCase()}`} style={{ margin: 0, fontSize: '1rem' }}></i>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Social Links section removed; icons are shown above action buttons */}
           
           {/* Quick Actions moved to hero; section removed */}
         </Card.Body>
@@ -680,7 +691,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           <div className="gallery-modal-overlay" onClick={() => { setShowGalleryModal(false); try { swiperRef?.autoplay?.start?.(); } catch (_) {} }}>
             <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="gallery-modal-header">
-                <h4>{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</h4>
+                <h4 className="gallery-modal-title" style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span>{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</span>
+                  <small className="gallery-modal-subtitle">{(selectedGalleryItem.index + 1)} / {(profile.gallery || []).length}</small>
+                </h4>
                 <button 
                   className="gallery-modal-close"
                   onClick={() => { setShowGalleryModal(false); try { swiperRef?.autoplay?.start?.(); } catch (_) {} }}
@@ -689,11 +703,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 </button>
               </div>
               <div className="gallery-modal-body">
-                <img 
-                  src={selectedGalleryItem.secureUrl || selectedGalleryItem.url || ''} 
-                  alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
-                  className="gallery-modal-image"
-                />
+                <div className="gallery-modal-frame">
+                  <img 
+                    src={selectedGalleryItem.secureUrl || selectedGalleryItem.url || ''} 
+                    alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
+                    className="gallery-modal-image"
+                  />
+                </div>
                 <div className="gallery-modal-caption">
                   <div className="title">{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</div>
                   {selectedGalleryItem.description && (
