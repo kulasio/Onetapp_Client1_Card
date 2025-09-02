@@ -232,14 +232,36 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return '';
   };
 
+  // Featured icon by label
+  const getFeaturedIcon = (label) => {
+    if (!label) return 'fas fa-link';
+    const key = label.toLowerCase();
+    if (key.includes('resume') || key.includes('cv')) return 'fas fa-file-alt';
+    if (key.includes('project')) return 'fas fa-folder-open';
+    if (key.includes('portfolio')) return 'fas fa-briefcase';
+    if (key.includes('blog')) return 'fas fa-blog';
+    if (key.includes('website') || key.includes('site')) return 'fas fa-globe';
+    if (key.includes('github')) return 'fab fa-github';
+    if (key.includes('linkedin')) return 'fab fa-linkedin-in';
+    if (key.includes('twitter') || key.includes('x ')) return 'fab fa-twitter';
+    if (key.includes('youtube')) return 'fab fa-youtube';
+    if (key.includes('download')) return 'fas fa-download';
+    if (key.includes('contact') || key.includes('email')) return 'fas fa-envelope';
+    if (key.includes('calendar') || key.includes('book')) return 'fas fa-calendar-alt';
+    return 'fas fa-external-link-alt';
+  };
+
   // Gallery modal state
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedGalleryItem, setSelectedGalleryItem] = useState(null);
+  const [swiperRef, setSwiperRef] = useState(null);
 
   // Handle gallery item click
   const handleGalleryItemClick = (item, index) => {
     setSelectedGalleryItem({ ...item, index });
     setShowGalleryModal(true);
+    // Pause autoplay while previewing
+    try { swiperRef?.autoplay?.stop?.(); } catch (_) {}
     
     // Track gallery item click
     onLogAction(card._id, {
@@ -247,6 +269,16 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
       label: `Clicked gallery item: ${item.title || `Item ${index + 1}`}`,
       url: item.secureUrl || item.url || ''
     });
+  };
+
+  // Handle profile avatar click to preview large image
+  const handleProfileClick = () => {
+    const item = {
+      url: getProfileImageUrl(),
+      title: profile?.fullName || user?.username || 'Profile',
+      description: [profile?.jobTitle, profile?.company].filter(Boolean).join(' • ')
+    };
+    handleGalleryItemClick(item, 0);
   };
 
   // Swiper handles navigation/pagination; no custom state required
@@ -412,7 +444,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </Button>
           </div>
           <div className="card-hero-content">
-            <div className="avatar-ring">
+            <div className="avatar-ring" role="button" onClick={handleProfileClick} title="View profile photo" style={{ cursor: 'pointer' }}>
               <img
                 src={getProfileImageUrl()}
                 alt={profile?.fullName || user?.username || 'Profile'}
@@ -466,76 +498,81 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           
           {/* Bio */}
           {isFieldVisible('bio') && profile?.bio && (
-            <>
+            <div className="section-row">
               <div className="card-section-label">Bio</div>
-              <div className={`bio-text ${bioExpanded ? 'expanded' : 'clamped'}`}>
-                {formatBioText(profile.bio)}
+              <div className="section-block">
+                <div className={`bio-text ${bioExpanded ? 'expanded' : 'clamped'}`}>
+                  {formatBioText(profile.bio)}
+                </div>
+                {profile.bio.length > 150 && (
+                  <button
+                    className="bio-toggle-btn"
+                    onClick={handleBioToggle}
+                  >
+                    {bioExpanded ? (
+                      <>
+                        <i className="fas fa-chevron-up"></i>
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-chevron-down"></i>
+                        Read More
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
-              {profile.bio.length > 150 && (
-                <button
-                  className="bio-toggle-btn"
-                  onClick={handleBioToggle}
-                >
-                  {bioExpanded ? (
-                    <>
-                      <i className="fas fa-chevron-up"></i>
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-chevron-down"></i>
-                      Read More
-                    </>
-                  )}
-                </button>
-              )}
-            </>
+            </div>
           )}
           
           {/* Featured Links */}
           {hasVisibleContent('featuredLinks') && (
-            <>
+            <div className="section-row">
               <div className="card-section-label">Featured</div>
-              <div className="featured-grid">
-                {profile?.featuredLinks?.slice(0, 6).map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleFeaturedClick(link)}
-                    className={`featured-chip ${getFeaturedVariantClass(link.label)}`}
+              <div className="section-block">
+                <div className="featured-grid">
+                  {profile?.featuredLinks?.slice(0, 6).map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleFeaturedClick(link)}
+                      className={`featured-chip ${getFeaturedVariantClass(link.label)}`}
+                    >
+                      <i className={getFeaturedIcon(link.label)}></i>
+                      <span>{(link.label || '').toUpperCase()}</span>
+                    </a>
+                  ))}
+                </div>
+                {profile?.featuredLinks && profile.featuredLinks.length > 6 && (
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => {
+                      onShowFeaturedModal();
+                      onLogAction(card._id, {
+                        type: 'view_all_featured_click',
+                        label: 'Clicked View All Featured',
+                        url: ''
+                      });
+                    }}
+                    className="featured-view-all"
                   >
-                    <i className="fas fa-external-link-alt"></i>
-                    <span>{link.label}</span>
-                  </a>
-                ))}
+                    View all
+                  </Button>
+                )}
               </div>
-              {profile?.featuredLinks && profile.featuredLinks.length > 6 && (
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  onClick={() => {
-                    onShowFeaturedModal();
-                    onLogAction(card._id, {
-                      type: 'view_all_featured_click',
-                      label: 'Clicked View All Featured',
-                      url: ''
-                    });
-                  }}
-                  className="featured-view-all"
-                >
-                  View all
-                </Button>
-              )}
-            </>
+            </div>
           )}
           
           {/* Gallery using Swiper */}
           {hasVisibleContent('gallery') && (
-            <>
+            <div className="section-row">
               <div className="card-section-label">Gallery</div>
-              <div className="glass-panel">
+              <div className="section-block">
+                <div className="glass-panel gallery-panel">
                 <Swiper
                   modules={[Pagination, A11y, EffectCoverflow, Autoplay]}
                   effect="coverflow"
@@ -548,6 +585,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   slidesPerView={1}
                   onSlideChange={(swiper) => setSelectedGalleryItem({ ...(profile.gallery[swiper.realIndex] || {}), index: swiper.realIndex })}
                   className="gallery-swiper"
+                  onSwiper={(swiper) => setSwiperRef(swiper)}
                 >
                 {profile.gallery.map((item, index) => {
                   // Get the correct URL for Cloudinary or legacy data
@@ -578,63 +616,60 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   return (
                     <SwiperSlide key={index}>
                       <div className="swiper-slide-inner" onClick={() => handleGalleryItemClick(item, index)}>
-                        {itemUrl ? (
-                          <img src={itemUrl} alt={item.title || `Gallery ${index + 1}`} className="slider-image" />
-                        ) : (
-                          <div className="gallery-error">
-                            <i className="fas fa-exclamation-triangle"></i>
-                            <span>No image</span>
+                        <div className="slider-card">
+                          {itemUrl ? (
+                            <img src={itemUrl} alt={item.title || `Gallery ${index + 1}`} className="slider-image" />
+                          ) : (
+                            <div className="gallery-error">
+                              <i className="fas fa-exclamation-triangle"></i>
+                              <span>No image</span>
+                            </div>
+                          )}
+                          <div className="slider-caption">
+                            <div className="slider-title">{item.title || `Gallery Item ${index + 1}`}</div>
+                            {item.description && (
+                              <div className="slider-desc">{formatDescriptionText(item.description, index)}</div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </SwiperSlide>
                   );
                 })}
                 </Swiper>
-                {/* Active slide caption below swiper for better pagination layout */}
-                {(() => {
-                  const currentIndex = selectedGalleryItem?.index ?? 0;
-                  const item = profile.gallery[currentIndex] || {};
-                  return (
-                    <div className="gallery-caption">
-                      <div className="gallery-title">{item.title || `Gallery Item ${currentIndex + 1}`}</div>
-                      {item.description && (
-                        <div className="gallery-description">
-                          {formatDescriptionText(item.description, currentIndex)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                {/* Caption moved inside each slide for a cleaner card layout */}
+                </div>
               </div>
-            </>
+            </div>
           )}
           
           {/* Social Links - single-row, no slider */}
           {hasVisibleContent('socialLinks') && (
-            <>
+            <div className="section-row">
               <div className="card-section-label">Social Media</div>
-              <div
-                className="mb-2"
-                style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'nowrap' }}
-              >
-                {getSocialLinks().map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleSocialClick(link.platform, link.url)}
-                    className="action-btn btn-dark pill"
-                    style={{ padding: 0, height: '40px', width: '40px', textDecoration: 'none' }}
-                    aria-label={link.platform}
-                    title={link.platform}
-                  >
-                    <i className={`fab fa-${link.platform.toLowerCase()}`} style={{ margin: 0, fontSize: '1rem' }}></i>
-                  </a>
-                ))}
+              <div className="section-block">
+                <div
+                  className="mb-2"
+                  style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'nowrap' }}
+                >
+                  {getSocialLinks().map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleSocialClick(link.platform, link.url)}
+                      className="action-btn btn-dark pill"
+                      style={{ padding: 0, height: '40px', width: '40px', textDecoration: 'none' }}
+                      aria-label={link.platform}
+                      title={link.platform}
+                    >
+                      <i className={`fab fa-${link.platform.toLowerCase()}`} style={{ margin: 0, fontSize: '1rem' }}></i>
+                    </a>
+                  ))}
+                </div>
               </div>
-            </>
+            </div>
           )}
           
           {/* Quick Actions moved to hero; section removed */}
@@ -642,13 +677,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         
         {/* Gallery Modal */}
         {showGalleryModal && selectedGalleryItem && (
-          <div className="gallery-modal-overlay" onClick={() => setShowGalleryModal(false)}>
+          <div className="gallery-modal-overlay" onClick={() => { setShowGalleryModal(false); try { swiperRef?.autoplay?.start?.(); } catch (_) {} }}>
             <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="gallery-modal-header">
                 <h4>{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</h4>
                 <button 
                   className="gallery-modal-close"
-                  onClick={() => setShowGalleryModal(false)}
+                  onClick={() => { setShowGalleryModal(false); try { swiperRef?.autoplay?.start?.(); } catch (_) {} }}
                 >
                   <i className="fas fa-times"></i>
                 </button>
@@ -659,19 +694,53 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
                   className="gallery-modal-image"
                 />
-                {selectedGalleryItem.description && (
-                  <div className="gallery-modal-description">
-                    {selectedGalleryItem.description}
-                  </div>
-                )}
+                <div className="gallery-modal-caption">
+                  <div className="title">{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</div>
+                  {selectedGalleryItem.description && (
+                    <div className="desc">{selectedGalleryItem.description}</div>
+                  )}
+                </div>
+                <div className="gallery-modal-nav">
+                  <button
+                    className="gallery-nav-button"
+                    aria-label="Previous"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const count = (profile.gallery || []).length;
+                      const nextIndex = ((selectedGalleryItem.index ?? 0) - 1 + count) % count;
+                      const next = profile.gallery[nextIndex] || {};
+                      setSelectedGalleryItem({ ...next, index: nextIndex });
+                    }}
+                  >
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+                  <button
+                    className="gallery-nav-button"
+                    aria-label="Next"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const count = (profile.gallery || []).length;
+                      const nextIndex = ((selectedGalleryItem.index ?? 0) + 1) % count;
+                      const next = profile.gallery[nextIndex] || {};
+                      setSelectedGalleryItem({ ...next, index: nextIndex });
+                    }}
+                  >
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
         
         {/* Footer */}
-        <div className="text-center mt-4 mb-3" style={{ color: '#888', fontSize: '1rem', letterSpacing: '0.01em' }}>
-          powered by onetapp
+        <div className="business-card-footer">
+          <div className="footer-brand">
+            <span className="brand-dot" aria-hidden="true"></span>
+            <span>
+              powered by <a href="https://onetapp.ph" target="_blank" rel="noreferrer">onetapp</a>
+            </span>
+          </div>
         </div>
       </Card>
     </>
