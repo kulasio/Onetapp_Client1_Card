@@ -145,37 +145,39 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         vCardFields.push('END:VCARD');
         const vCardData = vCardFields.join('\r\n');
 
-        // Prefer opening the Contacts app when possible (iOS/Android)
+        // Prefer opening the Contacts app via backend public vCard URL on mobile (prevents Safari blocking)
         const fileName = `${profile?.fullName || user?.username || 'contact'}.vcf`;
         const ua = (navigator.userAgent || '').toLowerCase();
         const isIOS = /iphone|ipad|ipod/.test(ua);
         const isAndroid = /android/.test(ua);
+        const backendBase = 'https://onetapp-backend-website.onrender.com';
+        const hasProfileId = !!profile?._id;
 
-        // Build a data URL for broad mobile compatibility
-        const vcardDataUrl = `data:text/vcard;charset=utf-8,${encodeURIComponent(vCardData)}`;
-
-        if (isIOS) {
-          // iOS Safari will open the data URL and prompt to add to Contacts
-          window.location.href = vcardDataUrl;
-        } else if (isAndroid) {
-          // Android Chrome will download/open the file which can be imported to Contacts
-          const a = document.createElement('a');
-          a.href = vcardDataUrl;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+        if ((isIOS || isAndroid) && hasProfileId) {
+          // Use inline-served vCard from backend to trigger native Add to Contacts UI
+          const publicVcardUrl = `${backendBase}/api/profiles/public/${profile._id}/vcard`;
+          window.location.href = publicVcardUrl;
         } else {
-          // Desktop fallback: use Blob and trigger download
-          const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
+          // Fallbacks: data URL for mobile without id, Blob download for desktop
+          const vcardDataUrl = `data:text/vcard;charset=utf-8,${encodeURIComponent(vCardData)}`;
+          if (isIOS || isAndroid) {
+            const a = document.createElement('a');
+            a.href = vcardDataUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } else {
+            const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          }
         }
 
         // Log the successful download
