@@ -294,8 +294,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           </div>
           
           {/* Featured Links */}
-          <div className="card-section-label">Featured</div>
-          <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
+          {profile?.featuredLinks && profile.featuredLinks.length > 0 && (
+            <>
+              <div className="card-section-label">Featured</div>
+              <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
             {profile?.featuredLinks?.slice(0, 3).map((link, index) => (
               <a
                 key={index}
@@ -324,7 +326,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 +{profile.featuredLinks.length - 3} more
               </Button>
             )}
-          </div>
+              </div>
+            </>
+          )}
           
           {/* Gallery */}
           {profile?.gallery && profile.gallery.length > 0 && (
@@ -465,8 +469,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           )}
           
           {/* Social Links */}
-          <div className="card-section-label">Social Media</div>
-          <div className="card-social mb-3">
+          {getSocialLinks().length > 0 && (
+            <>
+              <div className="card-section-label">Social Media</div>
+              <div className="card-social mb-3">
             {getSocialLinks().slice(0, 5).map((link, index) => (
               <a
                 key={index}
@@ -501,7 +507,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 +{getSocialLinks().length - 5} more
               </Button>
             )}
-          </div>
+              </div>
+            </>
+          )}
           
           {/* Bottom Action Buttons */}
           <div className="card-section-label">Quick Actions</div>
