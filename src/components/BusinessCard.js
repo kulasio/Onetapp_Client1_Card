@@ -7,6 +7,40 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
   const { card, user, profile } = cardData || {};
 
+  // Helper function to check if a field should be visible
+  const isFieldVisible = (fieldName) => {
+    if (!profile?.visibilitySettings) return true; // Default to visible if no settings
+    return profile.visibilitySettings[fieldName] !== false;
+  };
+
+  // Helper function to check if a social media platform should be visible
+  const isSocialMediaVisible = (platform) => {
+    if (!profile?.visibilitySettings?.socialLinks) return true; // Default to visible if no settings
+    return profile.visibilitySettings.socialLinks[platform] !== false;
+  };
+
+  // Helper function to check if a section should be visible
+  const isSectionVisible = (sectionName) => {
+    if (!profile?.visibilitySettings) return true; // Default to visible if no settings
+    return profile.visibilitySettings[sectionName] !== false;
+  };
+
+  // Helper function to check if a section has any visible content
+  const hasVisibleContent = (sectionName) => {
+    if (!isSectionVisible(sectionName)) return false;
+    
+    switch (sectionName) {
+      case 'featuredLinks':
+        return profile?.featuredLinks && profile.featuredLinks.length > 0;
+      case 'gallery':
+        return profile?.gallery && profile.gallery.length > 0;
+      case 'socialLinks':
+        return getSocialLinks().length > 0;
+      default:
+        return true;
+    }
+  };
+
   // Get profile image URL
   const getProfileImageUrl = () => {
     if (profile?.profileImage) {
@@ -30,7 +64,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     const links = [];
     if (profile?.socialLinks) {
       Object.entries(profile.socialLinks).forEach(([platform, url]) => {
-        if (url) {
+        if (url && isSocialMediaVisible(platform)) {
           links.push({ platform, url });
         }
       });
@@ -69,20 +103,47 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           url: ''
         });
 
-        // Create vCard data
-        const vCardData = [
+        // Create vCard data with visibility respect
+        const vCardFields = [
           'BEGIN:VCARD',
-          'VERSION:3.0',
-          `FN:${profile?.fullName || user?.username || 'Contact'}`,
-          `TITLE:${profile?.jobTitle || ''}`,
-          `ORG:${profile?.company || ''}`,
-          `TEL:${profile?.contact?.phone || ''}`,
-          `EMAIL:${profile?.contact?.email || ''}`,
-          `URL:${profile?.website || ''}`,
-          `ADR:;;${profile?.contact?.location || ''}`,
-          `NOTE:${profile?.bio || ''}`,
-          'END:VCARD'
-        ].join('\r\n');
+          'VERSION:3.0'
+        ];
+
+        // Add visible fields only
+        if (isFieldVisible('fullName') && (profile?.fullName || user?.username)) {
+          vCardFields.push(`FN:${profile?.fullName || user?.username || 'Contact'}`);
+        }
+
+        if (isFieldVisible('jobTitle') && profile?.jobTitle) {
+          vCardFields.push(`TITLE:${profile.jobTitle}`);
+        }
+
+        if (isFieldVisible('company') && profile?.company) {
+          vCardFields.push(`ORG:${profile.company}`);
+        }
+
+        if (isFieldVisible('phone') && profile?.contact?.phone) {
+          vCardFields.push(`TEL:${profile.contact.phone}`);
+        }
+
+        if (isFieldVisible('email') && profile?.contact?.email) {
+          vCardFields.push(`EMAIL:${profile.contact.email}`);
+        }
+
+        if (profile?.website) {
+          vCardFields.push(`URL:${profile.website}`);
+        }
+
+        if (isFieldVisible('location') && profile?.contact?.location) {
+          vCardFields.push(`ADR:;;${profile.contact.location}`);
+        }
+
+        if (isFieldVisible('bio') && profile?.bio) {
+          vCardFields.push(`NOTE:${profile.bio}`);
+        }
+
+        vCardFields.push('END:VCARD');
+        const vCardData = vCardFields.join('\r\n');
 
         // Create and download vCard file
         const blob = new Blob([vCardData], { type: 'text/vcard' });
@@ -253,19 +314,32 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         
         <Card.Body>
           {/* Name */}
-          <Card.Title className="mb-1 fw-bold">
-            {profile?.fullName || user?.username || ''}
-          </Card.Title>
+          {isFieldVisible('fullName') && (
+            <Card.Title className="mb-1 fw-bold">
+              {profile?.fullName || user?.username || ''}
+            </Card.Title>
+          )}
           
           {/* Title */}
-          <div className="mb-1 text-secondary">
-            {profile?.jobTitle || ''}
-          </div>
+          {isFieldVisible('jobTitle') && profile?.jobTitle && (
+            <div className="mb-1 text-secondary">
+              {profile.jobTitle}
+            </div>
+          )}
+          
+          {/* Company */}
+          {isFieldVisible('company') && profile?.company && (
+            <div className="mb-1 text-secondary">
+              {profile.company}
+            </div>
+          )}
           
           {/* Location */}
-          <div className="mb-3 text-muted">
-            {profile?.location || ''}
-          </div>
+          {isFieldVisible('location') && profile?.contact?.location && (
+            <div className="mb-3 text-muted">
+              {profile.contact.location}
+            </div>
+          )}
           
 
           
@@ -285,33 +359,37 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           </div>
           
           {/* Bio */}
-          <div className="card-section-label">Bio</div>
-          <div className="mb-3">
-            <div className="bio-text">
-              {formatBioText(profile?.bio || '')}
-            </div>
-            {profile?.bio && profile.bio.length > 150 && (
-              <button
-                className="bio-toggle-btn"
-                onClick={handleBioToggle}
-              >
-                {bioExpanded ? (
-                  <>
-                    <i className="fas fa-chevron-up"></i>
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-chevron-down"></i>
-                    Read More
-                  </>
+          {isFieldVisible('bio') && profile?.bio && (
+            <>
+              <div className="card-section-label">Bio</div>
+              <div className="mb-3">
+                <div className="bio-text">
+                  {formatBioText(profile.bio)}
+                </div>
+                {profile.bio.length > 150 && (
+                  <button
+                    className="bio-toggle-btn"
+                    onClick={handleBioToggle}
+                  >
+                    {bioExpanded ? (
+                      <>
+                        <i className="fas fa-chevron-up"></i>
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-chevron-down"></i>
+                        Read More
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
-          </div>
+              </div>
+            </>
+          )}
           
           {/* Featured Links */}
-          {profile?.featuredLinks && profile.featuredLinks.length > 0 && (
+          {hasVisibleContent('featuredLinks') && (
             <>
               <div className="card-section-label">Featured</div>
               <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
@@ -348,7 +426,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           )}
           
           {/* Gallery */}
-          {profile?.gallery && profile.gallery.length > 0 && (
+          {hasVisibleContent('gallery') && (
             <>
               <div className="card-section-label">Gallery</div>
               <div className="gallery-grid mb-3">
@@ -493,7 +571,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           )}
           
           {/* Social Links */}
-          {getSocialLinks().length > 0 && (
+          {hasVisibleContent('socialLinks') && (
             <>
               <div className="card-section-label">Social Media</div>
               <div className="card-social mb-3">
@@ -552,8 +630,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 // Use Web Share API if available (mobile devices)
                 if (navigator.share) {
                   navigator.share({
-                    title: `${profile?.fullName || user?.username || 'Contact'}'s Business Card`,
-                    text: `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card`,
+                    title: isFieldVisible('fullName') ? `${profile?.fullName || user?.username || 'Contact'}'s Business Card` : 'Business Card',
+                    text: isFieldVisible('fullName') ? `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card` : 'Check out this business card',
                     url: window.location.href
                   }).catch(console.error);
                 } else {
@@ -579,7 +657,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </Button>
 
             {/* Get Directions button */}
-            {profile?.contact?.location && (
+            {isFieldVisible('location') && profile?.contact?.location && (
               <Button
                 variant="outline-dark"
                 size="sm"
@@ -606,6 +684,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             <Button
               variant="outline-dark"
               size="sm"
+              disabled={!isFieldVisible('email') || !profile?.contact?.email}
+              title={!isFieldVisible('email') || !profile?.contact?.email ? 'Email not available' : 'Request a quote'}
               onClick={() => {
                 onLogAction(card._id, {
                   type: 'request_quote_click',
@@ -614,9 +694,9 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 });
 
                 // Open email client with pre-filled subject and body
-                const subject = encodeURIComponent(`Quote Request from ${profile?.fullName || user?.username || 'Contact'}`);
-                const body = encodeURIComponent(`Hi ${profile?.fullName || user?.username || 'Contact'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
-                const emailUrl = `mailto:${profile?.contact?.email || ''}?subject=${subject}&body=${body}`;
+                const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
+                const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
+                const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
                 window.open(emailUrl);
               }}
               className="action-btn flex-fill"
