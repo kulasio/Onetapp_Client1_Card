@@ -105,85 +105,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
       icon: 'fas fa-user-plus'
     });
 
-    // Share Card button
-    actions.push({
-      label: 'Share Card',
-      variant: 'outline-dark',
-      onClick: () => {
-        // Log the action first
-        onLogAction(card._id, {
-          type: 'share_card_click',
-          label: 'Clicked Share Card',
-          url: ''
-        });
 
-        // Use Web Share API if available (mobile devices)
-        if (navigator.share) {
-          navigator.share({
-            title: `${profile?.fullName || user?.username || 'Contact'}'s Business Card`,
-            text: `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card`,
-            url: window.location.href
-          }).catch(console.error);
-        } else {
-          // Fallback: copy URL to clipboard
-          navigator.clipboard.writeText(window.location.href).then(() => {
-            // Show success message (you can implement a toast notification here)
-            alert('Card URL copied to clipboard!');
-          }).catch(() => {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = window.location.href;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert('Card URL copied to clipboard!');
-          });
-        }
-      },
-      icon: 'fas fa-share-alt'
-    });
-
-    // Get Directions button
-    if (profile?.contact?.location) {
-      actions.push({
-        label: 'Get Directions',
-        variant: 'outline-dark',
-        onClick: () => {
-          onLogAction(card._id, {
-            type: 'get_directions_click',
-            label: 'Clicked Get Directions',
-            url: ''
-          });
-
-          // Open in Google Maps
-          const encodedLocation = encodeURIComponent(profile.contact.location);
-          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-          window.open(mapsUrl, '_blank');
-        },
-        icon: 'fas fa-map-marker-alt'
-      });
-    }
-
-    // Request Quote button
-    actions.push({
-      label: 'Request Quote',
-      variant: 'outline-dark',
-      onClick: () => {
-        onLogAction(card._id, {
-          type: 'request_quote_click',
-          label: 'Clicked Request Quote',
-          url: ''
-        });
-
-        // Open email client with pre-filled subject and body
-        const subject = encodeURIComponent(`Quote Request from ${profile?.fullName || user?.username || 'Contact'}`);
-        const body = encodeURIComponent(`Hi ${profile?.fullName || user?.username || 'Contact'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
-        const emailUrl = `mailto:${profile?.contact?.email || ''}?subject=${subject}&body=${body}`;
-        window.open(emailUrl);
-      },
-      icon: 'fas fa-file-invoice-dollar'
-    });
 
 
 
@@ -579,6 +501,97 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 +{getSocialLinks().length - 5} more
               </Button>
             )}
+          </div>
+          
+          {/* Bottom Action Buttons */}
+          <div className="card-section-label">Quick Actions</div>
+          <div className="d-flex gap-2 flex-wrap align-items-center mb-3">
+            {/* Share Card button */}
+            <Button
+              variant="outline-dark"
+              size="sm"
+              onClick={() => {
+                onLogAction(card._id, {
+                  type: 'share_card_click',
+                  label: 'Clicked Share Card',
+                  url: ''
+                });
+
+                // Use Web Share API if available (mobile devices)
+                if (navigator.share) {
+                  navigator.share({
+                    title: `${profile?.fullName || user?.username || 'Contact'}'s Business Card`,
+                    text: `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card`,
+                    url: window.location.href
+                  }).catch(console.error);
+                } else {
+                  // Fallback: copy URL to clipboard
+                  navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Card URL copied to clipboard!');
+                  }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = window.location.href;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Card URL copied to clipboard!');
+                  });
+                }
+              }}
+              className="action-btn flex-fill"
+            >
+              <i className="fas fa-share-alt" style={{ marginRight: '0.5rem' }}></i>
+              Share Card
+            </Button>
+
+            {/* Get Directions button */}
+            {profile?.contact?.location && (
+              <Button
+                variant="outline-dark"
+                size="sm"
+                onClick={() => {
+                  onLogAction(card._id, {
+                    type: 'get_directions_click',
+                    label: 'Clicked Get Directions',
+                    url: ''
+                  });
+
+                  // Open in Google Maps
+                  const encodedLocation = encodeURIComponent(profile.contact.location);
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                  window.open(mapsUrl, '_blank');
+                }}
+                className="action-btn flex-fill"
+              >
+                <i className="fas fa-map-marker-alt" style={{ marginRight: '0.5rem' }}></i>
+                Get Directions
+              </Button>
+            )}
+
+            {/* Request Quote button */}
+            <Button
+              variant="outline-dark"
+              size="sm"
+              onClick={() => {
+                onLogAction(card._id, {
+                  type: 'request_quote_click',
+                  label: 'Clicked Request Quote',
+                  url: ''
+                });
+
+                // Open email client with pre-filled subject and body
+                const subject = encodeURIComponent(`Quote Request from ${profile?.fullName || user?.username || 'Contact'}`);
+                const body = encodeURIComponent(`Hi ${profile?.fullName || user?.username || 'Contact'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
+                const emailUrl = `mailto:${profile?.contact?.email || ''}?subject=${subject}&body=${body}`;
+                window.open(emailUrl);
+              }}
+              className="action-btn flex-fill"
+            >
+              <i className="fas fa-file-invoice-dollar" style={{ marginRight: '0.5rem' }}></i>
+              Request Quote
+            </Button>
           </div>
         </Card.Body>
         
