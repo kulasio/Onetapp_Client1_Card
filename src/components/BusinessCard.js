@@ -69,17 +69,61 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return getProfileImageUrl();
   };
 
-  // Get social links
+  // Get social links (normalize common key variants)
   const getSocialLinks = () => {
     const links = [];
     if (profile?.socialLinks) {
-      Object.entries(profile.socialLinks).forEach(([platform, url]) => {
-        if (url && isSocialMediaVisible(platform)) {
+      const aliasToCanonical = {
+        facebook: 'facebook', fb: 'facebook', facebookurl: 'facebook',
+        instagram: 'instagram', ig: 'instagram', instagramurl: 'instagram',
+        linkedin: 'linkedin', linkedIn: 'linkedin', linkedinurl: 'linkedin', linkedin_url: 'linkedin',
+        youtube: 'youtube', yt: 'youtube', youtubeurl: 'youtube',
+        tiktok: 'tiktok', tiktokurl: 'tiktok',
+        twitter: 'twitter', x: 'twitter', twitterurl: 'twitter'
+      };
+
+      Object.entries(profile.socialLinks).forEach(([rawKey, url]) => {
+        if (!url) return;
+        const key = String(rawKey).replace(/[^a-z]/gi, '').toLowerCase();
+        const platform = aliasToCanonical[key] || rawKey;
+        if (isSocialMediaVisible(platform)) {
           links.push({ platform, url });
         }
       });
     }
-    return links;
+    // Preferred ordering for display
+    const order = ['facebook', 'instagram', 'linkedin', 'youtube', 'tiktok', 'twitter', 'x'];
+    return links.sort((a, b) => {
+      const ai = order.indexOf((a.platform || '').toLowerCase());
+      const bi = order.indexOf((b.platform || '').toLowerCase());
+      const an = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+      const bn = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+      return an - bn;
+    });
+  };
+
+  // Map platform to Font Awesome brand icon
+  const getPlatformIcon = (platformRaw) => {
+    const platform = (platformRaw || '').toLowerCase();
+    switch (platform) {
+      case 'facebook':
+      case 'fb':
+        return 'facebook-f';
+      case 'instagram':
+        return 'instagram';
+      case 'linkedin':
+      case 'linkedIn':
+        return 'linkedin-in';
+      case 'youtube':
+        return 'youtube';
+      case 'tiktok':
+        return 'tiktok';
+      case 'x':
+      case 'twitter':
+        return 'twitter';
+      default:
+        return platform; // fallback
+    }
   };
 
   // Get action buttons
@@ -376,82 +420,65 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 <span className="badge-chip"><i className="fas fa-map-marker-alt"></i> {profile.contact.location}</span>
               )}
             </div>
-
-            <div className="header-quick-actions">
-              {/* Share */}
+          </div>
+          <div className="header-quick-actions">
+            {/* Share */}
+            <button
+              className="quick-icon"
+              title="Share Card"
+              onClick={() => {
+                onLogAction(card._id, { type: 'share_card_click', label: 'Clicked Share Card', url: '' });
+                if (navigator.share) {
+                  navigator.share({
+                    title: isFieldVisible('fullName') ? `${profile?.fullName || user?.username || 'Contact'}'s Business Card` : 'Business Card',
+                    text: isFieldVisible('fullName') ? `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card` : 'Check out this business card',
+                    url: window.location.href
+                  }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(window.location.href).catch(() => {});
+                }
+              }}
+            >
+              <i className="fas fa-share-alt"></i>
+            </button>
+            {/* Directions */}
+            {isFieldVisible('location') && profile?.contact?.location && (
               <button
                 className="quick-icon"
-                title="Share Card"
+                title="Get Directions"
                 onClick={() => {
-                  onLogAction(card._id, { type: 'share_card_click', label: 'Clicked Share Card', url: '' });
-                  if (navigator.share) {
-                    navigator.share({
-                      title: isFieldVisible('fullName') ? `${profile?.fullName || user?.username || 'Contact'}'s Business Card` : 'Business Card',
-                      text: isFieldVisible('fullName') ? `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card` : 'Check out this business card',
-                      url: window.location.href
-                    }).catch(() => {});
-                  } else {
-                    navigator.clipboard.writeText(window.location.href).catch(() => {});
-                  }
+                  onLogAction(card._id, { type: 'get_directions_click', label: 'Clicked Get Directions', url: '' });
+                  const encodedLocation = encodeURIComponent(profile.contact.location);
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                  window.open(mapsUrl, '_blank');
                 }}
               >
-                <i className="fas fa-share-alt"></i>
+                <i className="fas fa-map-marker-alt"></i>
               </button>
-              {/* Directions */}
-              {isFieldVisible('location') && profile?.contact?.location && (
-                <button
-                  className="quick-icon"
-                  title="Get Directions"
-                  onClick={() => {
-                    onLogAction(card._id, { type: 'get_directions_click', label: 'Clicked Get Directions', url: '' });
-                    const encodedLocation = encodeURIComponent(profile.contact.location);
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-                    window.open(mapsUrl, '_blank');
-                  }}
-                >
-                  <i className="fas fa-map-marker-alt"></i>
-                </button>
-              )}
-              {/* Quote */}
-              <button
-                className="quick-icon"
-                title="Request Quote"
-                disabled={!isFieldVisible('email') || !profile?.contact?.email}
-                onClick={() => {
-                  onLogAction(card._id, { type: 'request_quote_click', label: 'Clicked Request Quote', url: '' });
-                  const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
-                  const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
-                  const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
-                  window.open(emailUrl);
-                }}
-              >
-                <i className="fas fa-file-invoice-dollar"></i>
-              </button>
-            </div>
+            )}
+            {/* Quote */}
+            <button
+              className="quick-icon"
+              title="Request Quote"
+              disabled={!isFieldVisible('email') || !profile?.contact?.email}
+              onClick={() => {
+                onLogAction(card._id, { type: 'request_quote_click', label: 'Clicked Request Quote', url: '' });
+                const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
+                const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
+                const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
+                window.open(emailUrl);
+              }}
+            >
+              <i className="fas fa-file-invoice-dollar"></i>
+            </button>
           </div>
         </div>
         
         <Card.Body>
-          {/* Connect section under header */}
-          {hasVisibleContent('socialLinks') && (
-            <div className="connect-inline mb-3">
-              <div className="connect-inline-title">CONNECT WITH ME</div>
-              <div className="connect-inline-icons">
-                {getSocialLinks().slice(0, 3).map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="connect-btn"
-                    onClick={() => handleSocialClick(link.platform, link.url)}
-                  >
-                    <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Header inline strip: label only above primary actions */}
+          <div className="connect-inline mb-3 section-centered">
+            <div className="connect-inline-title">GET IN TOUCH</div>
+          </div>
           {/* Primary CTAs - keep only Book & Save */}
           <div className="d-flex gap-3 mb-4">
             {getActionButtons().map((action, index) => (
@@ -608,7 +635,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             <>
               <div className="card-section-label section-centered">CONNECT WITH ME</div>
               <div className="card-social mb-3">
-            {getSocialLinks().slice(0, 5).map((link, index) => (
+            {getSocialLinks().slice(0, 6).map((link, index) => (
               <a
                 key={index}
                 href={link.url}
@@ -617,11 +644,11 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 onClick={() => handleSocialClick(link.platform, link.url)}
                 className="social-link"
               >
-                <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+                <i className={`fab fa-${getPlatformIcon(link.platform)}`}></i>
                 <span className="platform-name">{link.platform}</span>
               </a>
             ))}
-            {getSocialLinks().length > 5 && (
+            {getSocialLinks().length > 6 && (
               <Button
                 variant="outline-secondary"
                 size="sm"
@@ -639,7 +666,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 }}
                 className="social-view-all-btn"
               >
-                +{getSocialLinks().length - 5} more
+                +{getSocialLinks().length - 6} more
               </Button>
             )}
               </div>
@@ -691,9 +718,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
         )}
         
         {/* Footer */}
-        <div className="text-center mt-4 mb-3" style={{ color: '#888', fontSize: '1rem', letterSpacing: '0.01em' }}>
-          powered by onetapp
-        </div>
+        <div className="footer-note">powered by onetapp</div>
       </Card>
     </>
   );
