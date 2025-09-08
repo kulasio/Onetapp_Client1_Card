@@ -843,3 +843,37 @@ body {
     padding: 1rem;
   }
 }
+
+/* ===== New header hero overlay (matches new design) ===== */
+.header-hero { position: relative; }
+.header-gradient { position: absolute; left: 0; right: 0; bottom: 0; top: 0; background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.7) 60%, rgba(15,23,42,0.95) 100%); border-top-left-radius: 1.2rem; border-top-right-radius: 1.2rem; }
+.header-content { position: absolute; left: 0; right: 0; bottom: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; padding: 0 1.2rem; color: #fff; }
+.avatar-wrap { position: absolute; left: 1.2rem; bottom: 9.5rem; width: 64px; height: 64px; border: 3px solid rgba(255,255,255,0.85); border-radius: 50%; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.header-name { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.02em; text-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+.badge-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.badge-chip { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.25); font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 999px; backdrop-filter: blur(4px); }
+.connect-wrap { margin-top: 0.2rem; }
+.connect-label { font-size: 0.78rem; letter-spacing: 0.08em; opacity: 0.9; text-transform: uppercase; }
+.connect-icons { display: flex; gap: 0.5rem; margin-top: 0.35rem; }
+.connect-btn { width: 36px; height: 36px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: #111827; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.35); text-decoration: none; }
+.connect-btn i { font-size: 1rem; }
+.connect-btn:hover { background: #0b0f1a; color: #fff; }
+
+/* Centered section titles */
+.section-centered { text-align: center; letter-spacing: 0.12em; color: #0f172a; }
+
+/* ===== Carousel variant for the Gallery ===== */
+.gallery-carousel { position: relative; }
+.carousel-card { position: relative; background: #fff; border-radius: 1rem; box-shadow: 0 8px 22px rgba(0,0,0,0.12); padding: 0.8rem; }
+.carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 999px; border: none; background: #111827; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+.carousel-nav.left { left: -12px; }
+.carousel-nav.right { right: -12px; }
+.carousel-nav:hover { background: #0b0f1a; }
+.carousel-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.carousel-dots .dot { width: 8px; height: 8px; border-radius: 999px; border: none; background: #cbd5e1; }
+.carousel-dots .dot.active { background: #111827; width: 20px; border-radius: 999px; }
+
+@media (max-width: 600px) {
+  .avatar-wrap { bottom: 8.5rem; width: 58px; height: 58px; }
+}

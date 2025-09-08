@@ -4,6 +4,7 @@ import { Card, Button } from 'react-bootstrap';
 const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAction }) => {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const { card, user, profile } = cardData || {};
 
@@ -57,6 +58,11 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
       }
     }
     return 'https://via.placeholder.com/180x200?text=No+Image';
+  };
+
+  // Avatar image (fallbacks to profile image)
+  const getAvatarUrl = () => {
+    return getProfileImageUrl();
   };
 
   // Get social links
@@ -248,6 +254,17 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
+  // Gallery navigation
+  const goPrev = () => {
+    if (!profile?.gallery || profile.gallery.length === 0) return;
+    setGalleryIndex((prev) => (prev - 1 + profile.gallery.length) % profile.gallery.length);
+  };
+
+  const goNext = () => {
+    if (!profile?.gallery || profile.gallery.length === 0) return;
+    setGalleryIndex((prev) => (prev + 1) % profile.gallery.length);
+  };
+
 
 
 
@@ -328,45 +345,58 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   return (
     <>
       <Card className="w-100 business-card">
-        {/* Profile Image */}
-        <Card.Img
-          variant="top"
-          src={getProfileImageUrl()}
-          alt={profile?.fullName || user?.username || 'Profile'}
-          className="profile-img-top"
-        />
+        {/* Header with overlay design */}
+        <div className="header-hero">
+          <img
+            src={getProfileImageUrl()}
+            alt={profile?.fullName || user?.username || 'Profile'}
+            className="profile-img-top"
+          />
+          <div className="header-gradient"></div>
+
+          <div className="header-content">
+            <div className="avatar-wrap">
+              <img src={getAvatarUrl()} alt="avatar" className="avatar-img" />
+            </div>
+            {isFieldVisible('fullName') && (
+              <div className="header-name">{profile?.fullName || user?.username || ''}</div>
+            )}
+            <div className="badge-row">
+              {isFieldVisible('jobTitle') && profile?.jobTitle && (
+                <span className="badge-chip"><i className="fas fa-briefcase"></i> {profile.jobTitle}</span>
+              )}
+              {isFieldVisible('company') && profile?.company && (
+                <span className="badge-chip"><i className="fas fa-building"></i> {profile.company}</span>
+              )}
+              {isFieldVisible('location') && profile?.contact?.location && (
+                <span className="badge-chip"><i className="fas fa-map-marker-alt"></i> {profile.contact.location}</span>
+              )}
+            </div>
+
+            {hasVisibleContent('socialLinks') && (
+              <div className="connect-wrap">
+                <div className="connect-label">Connect with me</div>
+                <div className="connect-icons">
+                  {getSocialLinks().slice(0, 3).map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="connect-btn"
+                      onClick={() => handleSocialClick(link.platform, link.url)}
+                    >
+                      <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         
         <Card.Body>
-          {/* Name */}
-          {isFieldVisible('fullName') && (
-          <Card.Title className="mb-1 fw-bold">
-            {profile?.fullName || user?.username || ''}
-          </Card.Title>
-          )}
-          
-          {/* Title */}
-          {isFieldVisible('jobTitle') && profile?.jobTitle && (
-            <div className="mb-1 text-secondary">
-              {profile.jobTitle}
-            </div>
-          )}
-          
-          {/* Company */}
-          {isFieldVisible('company') && profile?.company && (
-          <div className="mb-1 text-secondary">
-              {profile.company}
-          </div>
-          )}
-          
-          {/* Location */}
-          {isFieldVisible('location') && profile?.contact?.location && (
-          <div className="mb-3 text-muted">
-              {profile.contact.location}
-          </div>
-          )}
-          
-
-          
+          {/* Primary CTAs */}
           {/* Action Buttons */}
           <div className="d-flex gap-3 mb-4">
             {getActionButtons().map((action, index) => (
@@ -385,7 +415,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Bio */}
           {isFieldVisible('bio') && profile?.bio && (
             <>
-          <div className="card-section-label">Bio</div>
+          <div className="card-section-label section-centered">BIO</div>
           <div className="mb-3">
             <div className="bio-text">
                   {formatBioText(profile.bio)}
@@ -415,7 +445,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Featured Links */}
           {hasVisibleContent('featuredLinks') && (
             <>
-          <div className="card-section-label">Featured</div>
+          <div className="card-section-label section-centered">FEATURED</div>
           <div className="d-flex gap-2 flex-wrap align-items-center card-featured">
             {profile?.featuredLinks?.slice(0, 3).map((link, index) => (
               <a
@@ -452,144 +482,84 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Gallery */}
           {hasVisibleContent('gallery') && (
             <>
-              <div className="card-section-label">Gallery</div>
-              <div className="gallery-grid mb-3">
-                {profile.gallery.map((item, index) => {
-                  // Get the correct URL for Cloudinary or legacy data
+              <div className="card-section-label section-centered">GALLERY</div>
+              <div className="gallery-carousel">
+                {(() => {
+                  const item = profile.gallery[galleryIndex];
+                  if (!item) return null;
                   const getItemUrl = () => {
-                    if (item.secureUrl) {
-                      return item.secureUrl; // Always use secure URL if available
-                    } else if (item.url && item.url.startsWith('https://')) {
-                      return item.url; // Already HTTPS
-                    } else if (item.url && item.url.startsWith('http://')) {
-                      // Force upgrade to HTTPS for Cloudinary URLs
-                      return item.url.replace('http://', 'https://');
-                    } else if (item.url && !item.url.startsWith('http')) {
-                      // If no protocol specified, assume HTTPS
-                      return `https://${item.url}`;
-                    } else if (item.url) {
-                      return item.url; // Fallback for other cases
-                    } else if (item.data) {
-                      // Legacy base64 data
-                      return `data:image/jpeg;base64,${item.data}`;
-                    }
+                    if (item.secureUrl) return item.secureUrl;
+                    if (item.url && item.url.startsWith('https://')) return item.url;
+                    if (item.url && item.url.startsWith('http://')) return item.url.replace('http://', 'https://');
+                    if (item.url && !item.url.startsWith('http')) return `https://${item.url}`;
+                    if (item.url) return item.url;
+                    if (item.data) return `data:image/jpeg;base64,${item.data}`;
                     return null;
                   };
-                  
                   const itemUrl = getItemUrl();
-                  // Even numbers (index 1, 3, 5...) should have text on left
-                  // Odd numbers (index 0, 2, 4...) should have image on left
-                  const layout = index % 2 === 0 ? 'image-left' : 'text-left';
-                  const isImageLeft = index % 2 === 0; // Even index = image left, odd index = text left
-                  
-
-                  
                   return (
-                    <div key={index} className={`gallery-item ${layout}`}>
-                      {isImageLeft ? (
-                        <>
-                          {/* Image First */}
-                          <div className="gallery-image-container">
-                            {itemUrl ? (
-                              <img
-                                src={itemUrl}
-                                alt={item.title || `Gallery ${index + 1}`}
-                                className="gallery-image"
-                                onClick={() => handleGalleryItemClick(item, index)}
-                                style={{ cursor: 'pointer' }}
-                              />
-                            ) : (
-                          <div className="gallery-error">
-                            <i className="fas fa-exclamation-triangle"></i>
-                                <span>No image</span>
-                              </div>
-                            )}
-                          </div>
-                          {/* Text Content Second */}
-                          <div className="gallery-content">
-                            <h4 className="gallery-title">
-                              {item.title || `Gallery Item ${index + 1}`}
-                            </h4>
-                            <div className="gallery-description">
-                              <span>
-                                {formatDescriptionText(
-                                  item.description || 'No description available for this gallery item.', 
-                                  index
-                                )}
-                              </span>
-                              {(item.description || 'No description available for this gallery item.').length > 120 && (
-                                <button
-                                  className="view-more-btn"
-                                  onClick={() => toggleDescription(index)}
-                                >
-                                  {expandedDescriptions[index] ? (
-                                    <>
-                                      view less <i className="fas fa-chevron-up"></i>
-                                    </>
-                                  ) : (
-                                    <>
-                                      view more <i className="fas fa-chevron-down"></i>
-                                    </>
-                                  )}
-                                </button>
-                              )}
+                    <div className="carousel-card">
+                      <button className="carousel-nav left" onClick={goPrev} aria-label="Previous">
+                        <i className="fas fa-chevron-left"></i>
+                      </button>
+                      <div className="gallery-item image-left">
+                        <div className="gallery-image-container">
+                          {itemUrl ? (
+                            <img
+                              src={itemUrl}
+                              alt={item.title || `Gallery ${galleryIndex + 1}`}
+                              className="gallery-image"
+                              onClick={() => handleGalleryItemClick(item, galleryIndex)}
+                              style={{ cursor: 'pointer' }}
+                            />
+                          ) : (
+                            <div className="gallery-error">
+                              <i className="fas fa-exclamation-triangle"></i>
+                              <span>No image</span>
                             </div>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                          {/* Text Content First */}
-                          <div className="gallery-content">
-                            <h4 className="gallery-title">
-                              {item.title || `Gallery Item ${index + 1}`}
-                            </h4>
-                            <div className="gallery-description">
-                              <span>
-                                {formatDescriptionText(
-                                  item.description || 'No description available for this gallery item.', 
-                                  index
-                                )}
-                              </span>
-                              {(item.description || 'No description available for this gallery item.').length > 120 && (
-                                <button
-                                  className="view-more-btn"
-                                  onClick={() => toggleDescription(index)}
-                                >
-                                  {expandedDescriptions[index] ? (
-                                    <>
-                                      view less <i className="fas fa-chevron-up"></i>
-                                    </>
-                                  ) : (
-                                    <>
-                                      view more <i className="fas fa-chevron-down"></i>
-                                    </>
-                                  )}
-                                </button>
+                          )}
+                        </div>
+                        <div className="gallery-content">
+                          <h4 className="gallery-title">{item.title || `Gallery Item ${galleryIndex + 1}`}</h4>
+                          <div className="gallery-description">
+                            <span>
+                              {formatDescriptionText(
+                                item.description || 'No description available for this gallery item.',
+                                galleryIndex
                               )}
-                            </div>
-                          </div>
-                          {/* Image Second */}
-                          <div className="gallery-image-container">
-                                {itemUrl ? (
-                                  <img
-                                    src={itemUrl}
-                                alt={item.title || `Gallery ${index + 1}`}
-                                    className="gallery-image"
-                                onClick={() => handleGalleryItemClick(item, index)}
-                                style={{ cursor: 'pointer' }}
-                                  />
+                            </span>
+                            {(item.description || 'No description available for this gallery item.').length > 120 && (
+                              <button className="view-more-btn" onClick={() => toggleDescription(galleryIndex)}>
+                                {expandedDescriptions[galleryIndex] ? (
+                                  <>
+                                    view less <i className="fas fa-chevron-up"></i>
+                                  </>
                                 ) : (
-                                  <div className="gallery-error">
-                                    <i className="fas fa-exclamation-triangle"></i>
-                                <span>No image</span>
-                                  </div>
+                                  <>
+                                    view more <i className="fas fa-chevron-down"></i>
+                                  </>
+                                )}
+                              </button>
                             )}
                           </div>
-                          </>
-                        )}
+                        </div>
+                      </div>
+                      <button className="carousel-nav right" onClick={goNext} aria-label="Next">
+                        <i className="fas fa-chevron-right"></i>
+                      </button>
                     </div>
                   );
-                })}
+                })()}
+                <div className="carousel-dots">
+                  {profile.gallery.map((_, i) => (
+                    <button
+                      key={i}
+                      className={`dot ${i === galleryIndex ? 'active' : ''}`}
+                      onClick={() => setGalleryIndex(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -597,7 +567,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Social Links */}
           {hasVisibleContent('socialLinks') && (
             <>
-              <div className="card-section-label">Social Media</div>
+              <div className="card-section-label section-centered">CONNECT WITH ME</div>
               <div className="card-social mb-3">
             {getSocialLinks().slice(0, 5).map((link, index) => (
               <a
