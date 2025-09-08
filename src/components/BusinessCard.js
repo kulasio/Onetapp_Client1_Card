@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Card, Button } from 'react-bootstrap';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAction }) => {
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -373,31 +377,82 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               )}
             </div>
 
-            {hasVisibleContent('socialLinks') && (
-              <div className="connect-wrap">
-                <div className="connect-label">Connect with me</div>
-                <div className="connect-icons">
-                  {getSocialLinks().slice(0, 3).map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="connect-btn"
-                      onClick={() => handleSocialClick(link.platform, link.url)}
-                    >
-                      <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="header-quick-actions">
+              {/* Share */}
+              <button
+                className="quick-icon"
+                title="Share Card"
+                onClick={() => {
+                  onLogAction(card._id, { type: 'share_card_click', label: 'Clicked Share Card', url: '' });
+                  if (navigator.share) {
+                    navigator.share({
+                      title: isFieldVisible('fullName') ? `${profile?.fullName || user?.username || 'Contact'}'s Business Card` : 'Business Card',
+                      text: isFieldVisible('fullName') ? `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card` : 'Check out this business card',
+                      url: window.location.href
+                    }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(window.location.href).catch(() => {});
+                  }
+                }}
+              >
+                <i className="fas fa-share-alt"></i>
+              </button>
+              {/* Directions */}
+              {isFieldVisible('location') && profile?.contact?.location && (
+                <button
+                  className="quick-icon"
+                  title="Get Directions"
+                  onClick={() => {
+                    onLogAction(card._id, { type: 'get_directions_click', label: 'Clicked Get Directions', url: '' });
+                    const encodedLocation = encodeURIComponent(profile.contact.location);
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
+                >
+                  <i className="fas fa-map-marker-alt"></i>
+                </button>
+              )}
+              {/* Quote */}
+              <button
+                className="quick-icon"
+                title="Request Quote"
+                disabled={!isFieldVisible('email') || !profile?.contact?.email}
+                onClick={() => {
+                  onLogAction(card._id, { type: 'request_quote_click', label: 'Clicked Request Quote', url: '' });
+                  const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
+                  const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
+                  const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
+                  window.open(emailUrl);
+                }}
+              >
+                <i className="fas fa-file-invoice-dollar"></i>
+              </button>
+            </div>
           </div>
         </div>
         
         <Card.Body>
-          {/* Primary CTAs */}
-          {/* Action Buttons */}
+          {/* Connect section under header */}
+          {hasVisibleContent('socialLinks') && (
+            <div className="connect-inline mb-3">
+              <div className="connect-inline-title">CONNECT WITH ME</div>
+              <div className="connect-inline-icons">
+                {getSocialLinks().slice(0, 3).map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="connect-btn"
+                    onClick={() => handleSocialClick(link.platform, link.url)}
+                  >
+                    <i className={`fab fa-${link.platform.toLowerCase()}`}></i>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Primary CTAs - keep only Book & Save */}
           <div className="d-flex gap-3 mb-4">
             {getActionButtons().map((action, index) => (
               <Button
@@ -479,14 +534,17 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </>
           )}
           
-          {/* Gallery */}
+          {/* Gallery (Swiper - dots only) */}
           {hasVisibleContent('gallery') && (
             <>
               <div className="card-section-label section-centered">GALLERY</div>
-              <div className="gallery-carousel">
-                {(() => {
-                  const item = profile.gallery[galleryIndex];
-                  if (!item) return null;
+              <Swiper
+                modules={[Pagination]}
+                pagination={{ clickable: true }}
+                className="gallery-swiper"
+                onSlideChange={(s) => setGalleryIndex(s.activeIndex)}
+              >
+                {profile.gallery.map((item, index) => {
                   const getItemUrl = () => {
                     if (item.secureUrl) return item.secureUrl;
                     if (item.url && item.url.startsWith('https://')) return item.url;
@@ -498,18 +556,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   };
                   const itemUrl = getItemUrl();
                   return (
-                    <div className="carousel-card">
-                      <button className="carousel-nav left" onClick={goPrev} aria-label="Previous">
-                        <i className="fas fa-chevron-left"></i>
-                      </button>
+                    <SwiperSlide key={index}>
                       <div className="gallery-item image-left">
                         <div className="gallery-image-container">
                           {itemUrl ? (
                             <img
                               src={itemUrl}
-                              alt={item.title || `Gallery ${galleryIndex + 1}`}
+                              alt={item.title || `Gallery ${index + 1}`}
                               className="gallery-image"
-                              onClick={() => handleGalleryItemClick(item, galleryIndex)}
+                              onClick={() => handleGalleryItemClick(item, index)}
                               style={{ cursor: 'pointer' }}
                             />
                           ) : (
@@ -520,17 +575,14 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           )}
                         </div>
                         <div className="gallery-content">
-                          <h4 className="gallery-title">{item.title || `Gallery Item ${galleryIndex + 1}`}</h4>
+                          <h4 className="gallery-title">{item.title || `Gallery Item ${index + 1}`}</h4>
                           <div className="gallery-description">
                             <span>
-                              {formatDescriptionText(
-                                item.description || 'No description available for this gallery item.',
-                                galleryIndex
-                              )}
+                              {formatDescriptionText(item.description || 'No description available for this gallery item.', index)}
                             </span>
                             {(item.description || 'No description available for this gallery item.').length > 120 && (
-                              <button className="view-more-btn" onClick={() => toggleDescription(galleryIndex)}>
-                                {expandedDescriptions[galleryIndex] ? (
+                              <button className="view-more-btn" onClick={() => toggleDescription(index)}>
+                                {expandedDescriptions[index] ? (
                                   <>
                                     view less <i className="fas fa-chevron-up"></i>
                                   </>
@@ -544,23 +596,10 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                           </div>
                         </div>
                       </div>
-                      <button className="carousel-nav right" onClick={goNext} aria-label="Next">
-                        <i className="fas fa-chevron-right"></i>
-                      </button>
-                    </div>
+                    </SwiperSlide>
                   );
-                })()}
-                <div className="carousel-dots">
-                  {profile.gallery.map((_, i) => (
-                    <button
-                      key={i}
-                      className={`dot ${i === galleryIndex ? 'active' : ''}`}
-                      onClick={() => setGalleryIndex(i)}
-                      aria-label={`Go to slide ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
+                })}
+              </Swiper>
             </>
           )}
           
@@ -607,98 +646,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
             </>
           )}
           
-          {/* Bottom Action Buttons */}
-          <div className="card-section-label">Quick Actions</div>
-          <div className="d-flex gap-2 flex-wrap align-items-center mb-3">
-            {/* Share Card button */}
-            <Button
-              variant="outline-dark"
-              size="sm"
-              onClick={() => {
-                onLogAction(card._id, {
-                  type: 'share_card_click',
-                  label: 'Clicked Share Card',
-                  url: ''
-                });
-
-                // Use Web Share API if available (mobile devices)
-                if (navigator.share) {
-                  navigator.share({
-                    title: isFieldVisible('fullName') ? `${profile?.fullName || user?.username || 'Contact'}'s Business Card` : 'Business Card',
-                    text: isFieldVisible('fullName') ? `Check out ${profile?.fullName || user?.username || 'Contact'}'s business card` : 'Check out this business card',
-                    url: window.location.href
-                  }).catch(console.error);
-                } else {
-                  // Fallback: copy URL to clipboard
-                  navigator.clipboard.writeText(window.location.href).then(() => {
-                    alert('Card URL copied to clipboard!');
-                  }).catch(() => {
-                    // Fallback for older browsers
-                    const textArea = document.createElement('textarea');
-                    textArea.value = window.location.href;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    alert('Card URL copied to clipboard!');
-                  });
-                }
-              }}
-              className="action-btn flex-fill"
-            >
-              <i className="fas fa-share-alt" style={{ marginRight: '0.5rem' }}></i>
-              Share Card
-            </Button>
-
-            {/* Get Directions button */}
-            {isFieldVisible('location') && profile?.contact?.location && (
-              <Button
-                variant="outline-dark"
-                size="sm"
-                onClick={() => {
-                  onLogAction(card._id, {
-                    type: 'get_directions_click',
-                    label: 'Clicked Get Directions',
-                    url: ''
-                  });
-
-                  // Open in Google Maps
-                  const encodedLocation = encodeURIComponent(profile.contact.location);
-                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-                  window.open(mapsUrl, '_blank');
-                }}
-                className="action-btn flex-fill"
-              >
-                <i className="fas fa-map-marker-alt" style={{ marginRight: '0.5rem' }}></i>
-                Get Directions
-              </Button>
-            )}
-
-            {/* Request Quote button */}
-            <Button
-              variant="outline-dark"
-              size="sm"
-              disabled={!isFieldVisible('email') || !profile?.contact?.email}
-              title={!isFieldVisible('email') || !profile?.contact?.email ? 'Email not available' : 'Request a quote'}
-                onClick={() => {
-                  onLogAction(card._id, {
-                  type: 'request_quote_click',
-                  label: 'Clicked Request Quote',
-                  url: ''
-                });
-
-                // Open email client with pre-filled subject and body
-                const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
-                const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
-                const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
-                window.open(emailUrl);
-              }}
-              className="action-btn flex-fill"
-            >
-              <i className="fas fa-file-invoice-dollar" style={{ marginRight: '0.5rem' }}></i>
-              Request Quote
-            </Button>
-          </div>
+          {/* Bottom Quick Actions removed (moved to header overlay) */}
         </Card.Body>
         
         {/* Gallery Modal */}
@@ -712,14 +660,26 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                   onClick={() => setShowGalleryModal(false)}
                 >
                   <i className="fas fa-times"></i>
-              </button>
+                </button>
               </div>
-              <div className="gallery-modal-body">
+              <div className="gallery-modal-body" style={{ position: 'relative' }}>
+                <button className="carousel-nav left" onClick={() => setSelectedGalleryItem((prev) => {
+                  const nextIndex = (prev.index - 1 + profile.gallery.length) % profile.gallery.length;
+                  return { ...profile.gallery[nextIndex], index: nextIndex };
+                })} aria-label="Previous">
+                  <i className="fas fa-chevron-left"></i>
+                </button>
                 <img 
                   src={selectedGalleryItem.secureUrl || selectedGalleryItem.url || ''} 
                   alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
                   className="gallery-modal-image"
                 />
+                <button className="carousel-nav right" onClick={() => setSelectedGalleryItem((prev) => {
+                  const nextIndex = (prev.index + 1) % profile.gallery.length;
+                  return { ...profile.gallery[nextIndex], index: nextIndex };
+                })} aria-label="Next">
+                  <i className="fas fa-chevron-right"></i>
+                </button>
                 {selectedGalleryItem.description && (
                   <div className="gallery-modal-description">
                     {selectedGalleryItem.description}
