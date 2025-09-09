@@ -8,7 +8,6 @@ import 'swiper/css/pagination';
 const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAction }) => {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
-  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const { card, user, profile } = cardData || {};
 
@@ -302,16 +301,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     });
   };
 
-  // Gallery navigation
-  const goPrev = () => {
-    if (!profile?.gallery || profile.gallery.length === 0) return;
-    setGalleryIndex((prev) => (prev - 1 + profile.gallery.length) % profile.gallery.length);
-  };
-
-  const goNext = () => {
-    if (!profile?.gallery || profile.gallery.length === 0) return;
-    setGalleryIndex((prev) => (prev + 1) % profile.gallery.length);
-  };
+  // Gallery navigation handled by Swiper pagination; no manual handlers needed
 
 
 
