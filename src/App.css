@@ -842,8 +842,12 @@ body {
 .swiper-pagination-bullet-active { background: #111827; width: 20px; border-radius: 999px; }
 
 @media (max-width: 600px) {
-  .avatar-wrap { bottom: 5.4rem; width: 80px; height: 80px; }
-  .header-content { grid-template-columns: 80px 1fr; }
+  /* Align avatar and text better on small screens without changing desktop */
+  .header-content { grid-template-columns: 72px 1fr; gap: 0.35rem 0.6rem; bottom: 0.6rem; align-items: center; }
+  .avatar-wrap { width: 72px; height: 72px; }
+  .header-name { font-size: 1.2rem; }
+  .badge-row { margin-top: 0.1rem; }
+  .badge-chip { font-size: 0.75rem; padding: 0.22rem 0.55rem; }
   .header-quick-actions .quick-icon { width: 36px; height: 36px; }
 }
 
