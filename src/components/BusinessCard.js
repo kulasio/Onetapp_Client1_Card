@@ -559,7 +559,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
                 className="gallery-swiper"
-                onSlideChange={(s) => setGalleryIndex(s.activeIndex)}
+                onSlideChange={() => {}}
               >
                 {profile.gallery.map((item, index) => {
                   const getItemUrl = () => {
