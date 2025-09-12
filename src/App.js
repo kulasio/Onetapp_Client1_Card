@@ -69,7 +69,7 @@ function App() {
   }, []);
 
   // Get device and browser info
-  const getDeviceInfo = () => {
+  const getDeviceInfo = useCallback(() => {
     return {
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -77,10 +77,10 @@ function App() {
       screenResolution: `${window.screen.width}x${window.screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`
     };
-  };
+  }, []);
 
   // Get location data using hybrid approach
-  const getLocationData = async () => {
+  const getLocationData = useCallback(async () => {
     let locationData = {
       latitude: null,
       longitude: null,
@@ -150,7 +150,7 @@ function App() {
     }
 
     return locationData;
-  };
+  }, []);
 
   // Log tap event to backend
   const logTap = useCallback(async (cardId, eventId = null) => {
@@ -226,10 +226,10 @@ function App() {
     } catch (error) {
       console.log('Tap logging failed (non-critical):', error);
     }
-  }, [getOrCreateSessionId]);
+  }, [getOrCreateSessionId, getDeviceInfo, getLocationData]);
 
   // Log user action to backend
-  const logUserAction = async (cardId, actionData) => {
+  const logUserAction = useCallback(async (cardId, actionData) => {
     try {
       const deviceInfo = getDeviceInfo();
       const locationData = await getLocationData();
@@ -269,7 +269,7 @@ function App() {
     } catch (error) {
       console.error('Action logging failed:', error);
     }
-  };
+  }, [getDeviceInfo, getLocationData, getOrCreateSessionId]);
 
   // Fetch card data from backend
   const fetchCardData = async (cardUid) => {
