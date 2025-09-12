@@ -324,7 +324,37 @@ function App() {
   const handleBookSubmit = async (e) => {
     e.preventDefault();
     // Here you would typically send the form data to your backend
-    console.log('Booking request:', bookFormData);
+    try {
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const payload = {
+        cardUid: getQueryParam('cardUid') || cardData?.card?.cardUid || '',
+        requester: {
+          name: bookFormData.name,
+          email: bookFormData.email,
+          phone: bookFormData.phone,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        meeting: {
+          type: bookFormData.meetingType,
+          date: bookFormData.date,
+          timePreference: bookFormData.time,
+          purpose: bookFormData.purpose
+        },
+        meta: {
+          sessionId: getOrCreateSessionId(),
+          userAgent: navigator.userAgent
+        }
+      };
+      await fetch(`${API_BASE}/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      console.log('Booking request submitted to backend');
+    } catch (err) {
+      console.error('Booking submit failed:', err);
+    }
+    
     setSubmitting(true);
     setBookThankYou(true);
     setTimeout(() => {
