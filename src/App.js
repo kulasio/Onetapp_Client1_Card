@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Modal, Form, Button, Alert } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -22,6 +22,7 @@ function App() {
     purpose: ''
   });
   const [bookThankYou, setBookThankYou] = useState(false);
+  const bookNameInputRef = useRef(null);
 
 
   // Get cardUid from URL parameters
@@ -40,6 +41,7 @@ function App() {
   const generateSessionId = () => {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   };
+
 
   // Persist and reuse a single sessionId per browser session
   const SESSION_STORAGE_KEY = 'nfc_card_session_id';
@@ -289,6 +291,18 @@ function App() {
     }, 2000);
   };
 
+  // Autofocus the first input when the Book Now modal opens
+  useEffect(() => {
+    if (showBookModal) {
+      setTimeout(() => {
+        try { bookNameInputRef.current && bookNameInputRef.current.focus(); } catch (e) {}
+      }, 100);
+    } else {
+      // Reset thank you on close to avoid stale UI next open
+      setBookThankYou(false);
+    }
+  }, [showBookModal]);
+
 
 
   useEffect(() => {
@@ -453,7 +467,14 @@ function App() {
       </Modal>
 
       {/* Book Now Modal */}
-      <Modal show={showBookModal} onHide={() => setShowBookModal(false)}>
+      <Modal
+        show={showBookModal}
+        onHide={() => setShowBookModal(false)}
+        centered
+        scrollable
+        fullscreen="sm-down"
+        className="book-modal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Request a Meeting</Modal.Title>
         </Modal.Header>
@@ -466,6 +487,9 @@ function App() {
                 placeholder="Enter your full name"
                 value={bookFormData.name}
                 onChange={(e) => setBookFormData({...bookFormData, name: e.target.value})}
+                inputMode="text"
+                autoComplete="name"
+                ref={bookNameInputRef}
                 required
               />
             </Form.Group>
@@ -476,6 +500,8 @@ function App() {
                 placeholder="Enter your email"
                 value={bookFormData.email}
                 onChange={(e) => setBookFormData({...bookFormData, email: e.target.value})}
+                inputMode="email"
+                autoComplete="email"
                 required
               />
             </Form.Group>
@@ -486,6 +512,8 @@ function App() {
                 placeholder="Enter your phone number"
                 value={bookFormData.phone}
                 onChange={(e) => setBookFormData({...bookFormData, phone: e.target.value})}
+                inputMode="tel"
+                autoComplete="tel"
               />
             </Form.Group>
             <Form.Group className="mb-3">

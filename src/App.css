@@ -9,6 +9,24 @@ body {
   min-height: 100vh;
 }
 
+/* Book Now modal responsive tweaks */
+.book-modal .modal-dialog {
+  margin: 1rem;
+}
+
+.book-modal .modal-body {
+  padding-bottom: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .book-modal .modal-dialog {
+    margin: 0;
+  }
+  .book-modal .modal-content {
+    border-radius: 0;
+  }
+}
+
 .profile-img-top {
   width: 100%;
   height: 320px;
