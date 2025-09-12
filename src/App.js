@@ -32,6 +32,7 @@ function App() {
   const [currentStep, setCurrentStep] = useState(1); // 1..4
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const MAX_PURPOSE_LEN = 500;
 
 
   // Get cardUid from URL parameters
@@ -280,6 +281,44 @@ function App() {
   };
 
   const cardId = cardData?.card?._id;
+
+  const isDirty = () => {
+    return (
+      currentStep > 1 ||
+      bookFormData.meetingType ||
+      bookFormData.name ||
+      bookFormData.email ||
+      bookFormData.phone ||
+      bookFormData.date ||
+      bookFormData.time ||
+      bookFormData.purpose
+    );
+  };
+
+  const resetBookingState = () => {
+    setBookFormData({
+      name: '',
+      email: '',
+      phone: '',
+      meetingType: '',
+      date: '',
+      time: '',
+      purpose: ''
+    });
+    setCurrentStep(1);
+    setErrors({});
+    setSubmitting(false);
+    setBookThankYou(false);
+  };
+
+  const handleRequestClose = () => {
+    if (isDirty()) {
+      const ok = window.confirm('Discard your current booking request?');
+      if (!ok) return;
+    }
+    setShowBookModal(false);
+    resetBookingState();
+  };
 
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
@@ -554,7 +593,7 @@ function App() {
       {/* Book Now Modal */}
       <Modal
         show={showBookModal}
-        onHide={() => setShowBookModal(false)}
+        onHide={handleRequestClose}
         centered
         scrollable
         fullscreen="sm-down"
@@ -564,6 +603,7 @@ function App() {
           <Modal.Title>Request a Meeting</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <div className="modal-subtitle">Answer a few quick questions to send your request.</div>
           {/* Progress indicator */}
           <div className="book-stepper mb-3">
             {[1,2,3,4].map((s) => (
@@ -579,17 +619,25 @@ function App() {
               <>
                 <Form.Group className="mb-2">
                   <Form.Label>Preferred Meeting Type</Form.Label>
-                  <Form.Select
-                    ref={meetingTypeRef}
-                    value={bookFormData.meetingType}
-                    onChange={(e) => setBookFormData({...bookFormData, meetingType: e.target.value})}
-                    aria-invalid={!!errors.meetingType}
-                  >
-                    <option value="">Select meeting type</option>
-                    <option value="In Person">In Person</option>
-                    <option value="Phone Call">Phone Call</option>
-                    <option value="Video Call">Video Call</option>
-                  </Form.Select>
+                  <div className="meeting-type-grid" role="radiogroup" aria-label="Meeting Type">
+                    {[
+                      { value: 'In Person', icon: 'fa-user-friends', label: 'In Person' },
+                      { value: 'Phone Call', icon: 'fa-phone-alt', label: 'Phone Call' },
+                      { value: 'Video Call', icon: 'fa-video', label: 'Video Call' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        ref={bookFormData.meetingType === '' ? meetingTypeRef : undefined}
+                        className={`meeting-type-card ${bookFormData.meetingType === opt.value ? 'active' : ''}`}
+                        onClick={() => setBookFormData({ ...bookFormData, meetingType: opt.value })}
+                        aria-pressed={bookFormData.meetingType === opt.value}
+                      >
+                        <i className={`fas ${opt.icon}`}></i>
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
                   {errors.meetingType && <div className="invalid-hint">{errors.meetingType}</div>}
                 </Form.Group>
               </>
@@ -597,76 +645,90 @@ function App() {
 
             {currentStep === 2 && (
               <>
-                <Form.Group className="mb-2">
-                  <Form.Label>Your Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={bookFormData.name}
-                    onChange={(e) => setBookFormData({...bookFormData, name: e.target.value})}
-                    inputMode="text"
-                    autoComplete="name"
-                    ref={bookNameInputRef}
-                    aria-invalid={!!errors.name}
-                  />
-                  {errors.name && <div className="invalid-hint">{errors.name}</div>}
-                </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Email Address</Form.Label>
-                  <Form.Control
-                    type="email"
-                    placeholder="Enter your email"
-                    value={bookFormData.email}
-                    onChange={(e) => setBookFormData({...bookFormData, email: e.target.value})}
-                    inputMode="email"
-                    autoComplete="email"
-                    aria-invalid={!!errors.email}
-                  />
-                  {errors.email && <div className="invalid-hint">{errors.email}</div>}
-                </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Phone Number (optional)</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={bookFormData.phone}
-                    onChange={(e) => setBookFormData({...bookFormData, phone: e.target.value})}
-                    inputMode="tel"
-                    autoComplete="tel"
-                  />
-                </Form.Group>
+                <div className="row g-2">
+                  <div className="col-12 col-md-6">
+                    <Form.Group className="mb-2">
+                      <Form.Label>Your Name</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={bookFormData.name}
+                        onChange={(e) => setBookFormData({...bookFormData, name: e.target.value})}
+                        inputMode="text"
+                        autoComplete="name"
+                        ref={bookNameInputRef}
+                        aria-invalid={!!errors.name}
+                      />
+                      {errors.name && <div className="invalid-hint">{errors.name}</div>}
+                    </Form.Group>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <Form.Group className="mb-2">
+                      <Form.Label>Email Address</Form.Label>
+                      <Form.Control
+                        type="email"
+                        placeholder="Enter your email"
+                        value={bookFormData.email}
+                        onChange={(e) => setBookFormData({...bookFormData, email: e.target.value})}
+                        inputMode="email"
+                        autoComplete="email"
+                        aria-invalid={!!errors.email}
+                      />
+                      {errors.email && <div className="invalid-hint">{errors.email}</div>}
+                    </Form.Group>
+                  </div>
+                  <div className="col-12">
+                    <Form.Group className="mb-2">
+                      <Form.Label>Phone Number (optional)</Form.Label>
+                      <Form.Control
+                        type="tel"
+                        placeholder="Enter your phone number"
+                        value={bookFormData.phone}
+                        onChange={(e) => setBookFormData({...bookFormData, phone: e.target.value})}
+                        inputMode="tel"
+                        autoComplete="tel"
+                      />
+                    </Form.Group>
+                  </div>
+                </div>
               </>
             )}
 
             {currentStep === 3 && (
               <>
-                <Form.Group className="mb-2">
-                  <Form.Label>Preferred Date</Form.Label>
-                  <Form.Control
-                    ref={dateRef}
-                    type="date"
-                    value={bookFormData.date}
-                    onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
-                    aria-invalid={!!errors.date}
-                  />
-                  {errors.date && <div className="invalid-hint">{errors.date}</div>}
-                </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Preferred Time</Form.Label>
-                  <Form.Select
-                    ref={timeRef}
-                    value={bookFormData.time}
-                    onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
-                    aria-invalid={!!errors.time}
-                  >
-                    <option value="">Select preferred time</option>
-                    <option value="Morning">Morning</option>
-                    <option value="Afternoon">Afternoon</option>
-                    <option value="Evening">Evening</option>
-                  </Form.Select>
-                  {errors.time && <div className="invalid-hint">{errors.time}</div>}
-                  <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
-                </Form.Group>
+                <div className="row g-2">
+                  <div className="col-12 col-md-6">
+                    <Form.Group className="mb-2">
+                      <Form.Label>Preferred Date</Form.Label>
+                      <Form.Control
+                        ref={dateRef}
+                        type="date"
+                        value={bookFormData.date}
+                        onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
+                        aria-invalid={!!errors.date}
+                      />
+                      {errors.date && <div className="invalid-hint">{errors.date}</div>}
+                    </Form.Group>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <Form.Group className="mb-2">
+                      <Form.Label>Preferred Time</Form.Label>
+                      <Form.Select
+                        ref={timeRef}
+                        value={bookFormData.time}
+                        onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
+                        aria-invalid={!!errors.time}
+                      >
+                        <option value="">Select preferred time</option>
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Evening">Evening</option>
+                      </Form.Select>
+                      {errors.time && <div className="invalid-hint">{errors.time}</div>}
+                      <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
+                    </Form.Group>
+                  </div>
+                </div>
               </>
             )}
 
@@ -691,6 +753,7 @@ function App() {
                     ref={purposeRef}
                     aria-invalid={!!errors.purpose}
                   />
+                  <div className="char-counter">{(bookFormData.purpose || '').length}/{MAX_PURPOSE_LEN}</div>
                   {errors.purpose && <div className="invalid-hint">{errors.purpose}</div>}
                 </Form.Group>
               </>
@@ -703,7 +766,7 @@ function App() {
             )}
 
             {/* Navigation */}
-            <div className="book-actions mt-3">
+            <div className="book-actions book-actions-sticky mt-3">
               <Button variant="secondary" onClick={handleBack} disabled={currentStep === 1 || submitting}>
                 Back
               </Button>
