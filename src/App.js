@@ -279,6 +279,8 @@ function App() {
     return await res.json();
   };
 
+  const cardId = cardData?.card?._id;
+
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
     e.preventDefault();
@@ -328,14 +330,14 @@ function App() {
 
   // Log step view changes
   useEffect(() => {
-    if (!showBookModal || !cardData?.card?._id) return;
+    if (!showBookModal || !cardId) return;
     const labels = { 1: 'meeting_type', 2: 'contact_details', 3: 'date_time', 4: 'purpose_summary' };
-    logUserAction(cardData.card._id, {
+    logUserAction(cardId, {
       type: 'book_step_view',
       label: labels[currentStep] || `step_${currentStep}`,
       url: ''
     });
-  }, [currentStep, showBookModal]);
+  }, [currentStep, showBookModal, cardId, logUserAction]);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -374,15 +376,15 @@ function App() {
       return;
     }
     setCurrentStep((s) => Math.min(4, s + 1));
-    if (cardData?.card?._id) {
-      logUserAction(cardData.card._id, { type: 'book_step_next', label: `from_${currentStep}`, url: '' });
+    if (cardId) {
+      logUserAction(cardId, { type: 'book_step_next', label: `from_${currentStep}`, url: '' });
     }
   };
 
   const handleBack = () => {
     setCurrentStep((s) => Math.max(1, s - 1));
-    if (cardData?.card?._id) {
-      logUserAction(cardData.card._id, { type: 'book_step_back', label: `from_${currentStep}`, url: '' });
+    if (cardId) {
+      logUserAction(cardId, { type: 'book_step_back', label: `from_${currentStep}`, url: '' });
     }
   };
 
