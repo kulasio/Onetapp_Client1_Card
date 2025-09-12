@@ -23,6 +23,15 @@ function App() {
   });
   const [bookThankYou, setBookThankYou] = useState(false);
   const bookNameInputRef = useRef(null);
+  const meetingTypeRef = useRef(null);
+  const dateRef = useRef(null);
+  const timeRef = useRef(null);
+  const purposeRef = useRef(null);
+
+  // Stepper state
+  const [currentStep, setCurrentStep] = useState(1); // 1..4
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
 
   // Get cardUid from URL parameters
@@ -275,6 +284,7 @@ function App() {
     e.preventDefault();
     // Here you would typically send the form data to your backend
     console.log('Booking request:', bookFormData);
+    setSubmitting(true);
     setBookThankYou(true);
     setTimeout(() => {
       setShowBookModal(false);
@@ -288,6 +298,8 @@ function App() {
         time: '',
         purpose: ''
       });
+      setCurrentStep(1);
+      setSubmitting(false);
     }, 2000);
   };
 
@@ -295,13 +307,84 @@ function App() {
   useEffect(() => {
     if (showBookModal) {
       setTimeout(() => {
-        try { bookNameInputRef.current && bookNameInputRef.current.focus(); } catch (e) {}
+        try {
+          // Focus first control of current step
+          if (currentStep === 1) {
+            meetingTypeRef.current && meetingTypeRef.current.focus();
+          } else if (currentStep === 2) {
+            bookNameInputRef.current && bookNameInputRef.current.focus();
+          } else if (currentStep === 3) {
+            dateRef.current && dateRef.current.focus();
+          } else if (currentStep === 4) {
+            purposeRef.current && purposeRef.current.focus();
+          }
+        } catch (e) {}
       }, 100);
     } else {
       // Reset thank you on close to avoid stale UI next open
       setBookThankYou(false);
     }
-  }, [showBookModal]);
+  }, [showBookModal, currentStep]);
+
+  // Log step view changes
+  useEffect(() => {
+    if (!showBookModal || !cardData?.card?._id) return;
+    const labels = { 1: 'meeting_type', 2: 'contact_details', 3: 'date_time', 4: 'purpose_summary' };
+    logUserAction(cardData.card._id, {
+      type: 'book_step_view',
+      label: labels[currentStep] || `step_${currentStep}`,
+      url: ''
+    });
+  }, [currentStep, showBookModal]);
+
+  const validateStep = (step) => {
+    const newErrors = {};
+    if (step === 1) {
+      if (!bookFormData.meetingType) newErrors.meetingType = 'Please select a meeting type';
+    }
+    if (step === 2) {
+      if (!bookFormData.name || bookFormData.name.trim().length < 2) newErrors.name = 'Please enter your full name';
+      const email = (bookFormData.email || '').trim();
+      const emailValid = /.+@.+\..+/.test(email);
+      if (!email || !emailValid) newErrors.email = 'Enter a valid email address';
+    }
+    if (step === 3) {
+      if (!bookFormData.date) newErrors.date = 'Please choose a date';
+      if (!bookFormData.time) newErrors.time = 'Please choose a preferred time';
+    }
+    // Step 4 has optional purpose; enforce max length
+    if (step === 4) {
+      if ((bookFormData.purpose || '').length > 500) newErrors.purpose = 'Please keep it under 500 characters';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) {
+      // Focus first invalid field
+      setTimeout(() => {
+        if (errors.meetingType) meetingTypeRef.current && meetingTypeRef.current.focus();
+        else if (errors.name) bookNameInputRef.current && bookNameInputRef.current.focus();
+        else if (errors.email) bookNameInputRef.current && bookNameInputRef.current.focus();
+        else if (errors.date) dateRef.current && dateRef.current.focus();
+        else if (errors.time) timeRef.current && timeRef.current.focus();
+        else if (errors.purpose) purposeRef.current && purposeRef.current.focus();
+      }, 50);
+      return;
+    }
+    setCurrentStep((s) => Math.min(4, s + 1));
+    if (cardData?.card?._id) {
+      logUserAction(cardData.card._id, { type: 'book_step_next', label: `from_${currentStep}`, url: '' });
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((s) => Math.max(1, s - 1));
+    if (cardData?.card?._id) {
+      logUserAction(cardData.card._id, { type: 'book_step_back', label: `from_${currentStep}`, url: '' });
+    }
+  };
 
 
 
@@ -479,97 +562,161 @@ function App() {
           <Modal.Title>Request a Meeting</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {/* Progress indicator */}
+          <div className="book-stepper mb-3">
+            {[1,2,3,4].map((s) => (
+              <div key={s} className={`book-step ${s < currentStep ? 'completed' : ''} ${s === currentStep ? 'active' : ''}`}>
+                <span className="dot">{s}</span>
+                <span className="bar"></span>
+              </div>
+            ))}
+          </div>
+
           <Form onSubmit={handleBookSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Your Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter your full name"
-                value={bookFormData.name}
-                onChange={(e) => setBookFormData({...bookFormData, name: e.target.value})}
-                inputMode="text"
-                autoComplete="name"
-                ref={bookNameInputRef}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Email Address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter your email"
-                value={bookFormData.email}
-                onChange={(e) => setBookFormData({...bookFormData, email: e.target.value})}
-                inputMode="email"
-                autoComplete="email"
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Phone Number</Form.Label>
-              <Form.Control
-                type="tel"
-                placeholder="Enter your phone number"
-                value={bookFormData.phone}
-                onChange={(e) => setBookFormData({...bookFormData, phone: e.target.value})}
-                inputMode="tel"
-                autoComplete="tel"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Preferred Meeting Type</Form.Label>
-              <Form.Select
-                value={bookFormData.meetingType}
-                onChange={(e) => setBookFormData({...bookFormData, meetingType: e.target.value})}
-                required
-              >
-                <option value="">Select meeting type</option>
-                <option value="In Person">In Person</option>
-                <option value="Phone Call">Phone Call</option>
-                <option value="Video Call">Video Call</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Preferred Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={bookFormData.date}
-                onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Preferred Time</Form.Label>
-              <Form.Select
-                value={bookFormData.time}
-                onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
-                required
-              >
-                <option value="">Select preferred time</option>
-                <option value="Morning">Morning</option>
-                <option value="Afternoon">Afternoon</option>
-                <option value="Evening">Evening</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Purpose of Meeting</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Please describe what you'd like to discuss"
-                value={bookFormData.purpose}
-                onChange={(e) => setBookFormData({...bookFormData, purpose: e.target.value})}
-              />
-            </Form.Group>
-            <Button type="submit" className="w-100">
-              Submit Request
-            </Button>
+            {currentStep === 1 && (
+              <>
+                <Form.Group className="mb-2">
+                  <Form.Label>Preferred Meeting Type</Form.Label>
+                  <Form.Select
+                    ref={meetingTypeRef}
+                    value={bookFormData.meetingType}
+                    onChange={(e) => setBookFormData({...bookFormData, meetingType: e.target.value})}
+                    aria-invalid={!!errors.meetingType}
+                  >
+                    <option value="">Select meeting type</option>
+                    <option value="In Person">In Person</option>
+                    <option value="Phone Call">Phone Call</option>
+                    <option value="Video Call">Video Call</option>
+                  </Form.Select>
+                  {errors.meetingType && <div className="invalid-hint">{errors.meetingType}</div>}
+                </Form.Group>
+              </>
+            )}
+
+            {currentStep === 2 && (
+              <>
+                <Form.Group className="mb-2">
+                  <Form.Label>Your Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={bookFormData.name}
+                    onChange={(e) => setBookFormData({...bookFormData, name: e.target.value})}
+                    inputMode="text"
+                    autoComplete="name"
+                    ref={bookNameInputRef}
+                    aria-invalid={!!errors.name}
+                  />
+                  {errors.name && <div className="invalid-hint">{errors.name}</div>}
+                </Form.Group>
+                <Form.Group className="mb-2">
+                  <Form.Label>Email Address</Form.Label>
+                  <Form.Control
+                    type="email"
+                    placeholder="Enter your email"
+                    value={bookFormData.email}
+                    onChange={(e) => setBookFormData({...bookFormData, email: e.target.value})}
+                    inputMode="email"
+                    autoComplete="email"
+                    aria-invalid={!!errors.email}
+                  />
+                  {errors.email && <div className="invalid-hint">{errors.email}</div>}
+                </Form.Group>
+                <Form.Group className="mb-2">
+                  <Form.Label>Phone Number (optional)</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    value={bookFormData.phone}
+                    onChange={(e) => setBookFormData({...bookFormData, phone: e.target.value})}
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                </Form.Group>
+              </>
+            )}
+
+            {currentStep === 3 && (
+              <>
+                <Form.Group className="mb-2">
+                  <Form.Label>Preferred Date</Form.Label>
+                  <Form.Control
+                    ref={dateRef}
+                    type="date"
+                    value={bookFormData.date}
+                    onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
+                    aria-invalid={!!errors.date}
+                  />
+                  {errors.date && <div className="invalid-hint">{errors.date}</div>}
+                </Form.Group>
+                <Form.Group className="mb-2">
+                  <Form.Label>Preferred Time</Form.Label>
+                  <Form.Select
+                    ref={timeRef}
+                    value={bookFormData.time}
+                    onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
+                    aria-invalid={!!errors.time}
+                  >
+                    <option value="">Select preferred time</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Afternoon">Afternoon</option>
+                    <option value="Evening">Evening</option>
+                  </Form.Select>
+                  {errors.time && <div className="invalid-hint">{errors.time}</div>}
+                  <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
+                </Form.Group>
+              </>
+            )}
+
+            {currentStep === 4 && (
+              <>
+                <div className="summary mb-3">
+                  <div><strong>Type:</strong> {bookFormData.meetingType || '-'}</div>
+                  <div><strong>Name:</strong> {bookFormData.name || '-'}</div>
+                  <div><strong>Email:</strong> {bookFormData.email || '-'}</div>
+                  {bookFormData.phone && <div><strong>Phone:</strong> {bookFormData.phone}</div>}
+                  <div><strong>Date:</strong> {bookFormData.date || '-'}</div>
+                  <div><strong>Time:</strong> {bookFormData.time || '-'}</div>
+                </div>
+                <Form.Group className="mb-2">
+                  <Form.Label>Purpose (optional)</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    placeholder="Briefly describe what you'd like to discuss"
+                    value={bookFormData.purpose}
+                    onChange={(e) => setBookFormData({...bookFormData, purpose: e.target.value})}
+                    ref={purposeRef}
+                    aria-invalid={!!errors.purpose}
+                  />
+                  {errors.purpose && <div className="invalid-hint">{errors.purpose}</div>}
+                </Form.Group>
+              </>
+            )}
+
+            {bookThankYou && (
+              <Alert variant="success" className="mt-3">
+                Thank you! Your request has been submitted.
+              </Alert>
+            )}
+
+            {/* Navigation */}
+            <div className="book-actions mt-3">
+              <Button variant="secondary" onClick={handleBack} disabled={currentStep === 1 || submitting}>
+                Back
+              </Button>
+              {currentStep < 4 && (
+                <Button variant="primary" onClick={handleNext} disabled={submitting}>
+                  Next
+                </Button>
+              )}
+              {currentStep === 4 && (
+                <Button type="submit" className="btn-dark" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              )}
+            </div>
           </Form>
-          {bookThankYou && (
-            <Alert variant="success" className="mt-3">
-              Thank you! Your request has been submitted.
-            </Alert>
-          )}
         </Modal.Body>
       </Modal>
 
