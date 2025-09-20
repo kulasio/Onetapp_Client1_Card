@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
+import { motion, AnimatePresence } from 'framer-motion';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
@@ -287,9 +288,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   // Gallery modal state
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedGalleryItem, setSelectedGalleryItem] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoadingStates, setImageLoadingStates] = useState({});
+  const [imageErrorStates, setImageErrorStates] = useState({});
 
   // Handle gallery item click
   const handleGalleryItemClick = (item, index) => {
+    setCurrentImageIndex(index);
     setSelectedGalleryItem({ ...item, index });
     setShowGalleryModal(true);
     
@@ -299,6 +304,66 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
       label: `Clicked gallery item: ${item.title || `Item ${index + 1}`}`,
       url: item.secureUrl || item.url || ''
     });
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!showGalleryModal) return;
+      
+      switch (event.key) {
+        case 'Escape':
+          setShowGalleryModal(false);
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          navigateGallery(-1);
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          navigateGallery(1);
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showGalleryModal, currentImageIndex]);
+
+  // Gallery navigation
+  const navigateGallery = (direction) => {
+    const newIndex = (currentImageIndex + direction + profile.gallery.length) % profile.gallery.length;
+    setCurrentImageIndex(newIndex);
+    setSelectedGalleryItem({ ...profile.gallery[newIndex], index: newIndex });
+  };
+
+  // Handle image loading states
+  const handleImageLoad = (index) => {
+    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
+    setImageErrorStates(prev => ({ ...prev, [index]: false }));
+  };
+
+  const handleImageError = (index) => {
+    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
+    setImageErrorStates(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handleImageStart = (index) => {
+    setImageLoadingStates(prev => ({ ...prev, [index]: true }));
+    setImageErrorStates(prev => ({ ...prev, [index]: false }));
+  };
+
+  // Get optimized image URL
+  const getOptimizedImageUrl = (item) => {
+    if (item.secureUrl) return item.secureUrl;
+    if (item.url && item.url.startsWith('https://')) return item.url;
+    if (item.url && item.url.startsWith('http://')) return item.url.replace('http://', 'https://');
+    if (item.url && !item.url.startsWith('http')) return `https://${item.url}`;
+    if (item.url) return item.url;
+    if (item.data) return `data:image/jpeg;base64,${item.data}`;
+    return null;
   };
 
   // Gallery navigation handled by Swiper pagination; no manual handlers needed
@@ -666,46 +731,100 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           {/* Bottom Quick Actions removed (moved to header overlay) */}
         </Card.Body>
         
-        {/* Gallery Modal */}
-        {showGalleryModal && selectedGalleryItem && (
-          <div className="gallery-modal-overlay" onClick={() => setShowGalleryModal(false)}>
-            <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="gallery-modal-header">
-                <h4>{selectedGalleryItem.title || `Gallery Item ${selectedGalleryItem.index + 1}`}</h4>
-                <button 
-                  className="gallery-modal-close"
-                  onClick={() => setShowGalleryModal(false)}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-              <div className="gallery-modal-body" style={{ position: 'relative' }}>
-                <button className="carousel-nav left" onClick={() => setSelectedGalleryItem((prev) => {
-                  const nextIndex = (prev.index - 1 + profile.gallery.length) % profile.gallery.length;
-                  return { ...profile.gallery[nextIndex], index: nextIndex };
-                })} aria-label="Previous">
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-                <img 
-                  src={selectedGalleryItem.secureUrl || selectedGalleryItem.url || ''} 
-                  alt={selectedGalleryItem.title || `Gallery ${selectedGalleryItem.index + 1}`}
-                  className="gallery-modal-image"
-                />
-                <button className="carousel-nav right" onClick={() => setSelectedGalleryItem((prev) => {
-                  const nextIndex = (prev.index + 1) % profile.gallery.length;
-                  return { ...profile.gallery[nextIndex], index: nextIndex };
-                })} aria-label="Next">
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-                {selectedGalleryItem.description && (
-                  <div className="gallery-modal-description">
-                    {selectedGalleryItem.description}
+        {/* Simple Mobile Gallery Modal */}
+        <AnimatePresence>
+          {showGalleryModal && (
+            <motion.div
+              className="simple-gallery-overlay"
+              onClick={() => setShowGalleryModal(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.div
+                className="simple-gallery-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Simple Header */}
+                <div className="simple-gallery-header">
+                  <span className="gallery-counter">
+                    {currentImageIndex + 1} / {profile?.gallery?.length || 0}
+                  </span>
+                  <button
+                    className="simple-close-btn"
+                    onClick={() => setShowGalleryModal(false)}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+
+                {/* Main Image */}
+                <div className="simple-gallery-image-container">
+                  <img
+                    src={getOptimizedImageUrl(selectedGalleryItem)}
+                    alt={selectedGalleryItem?.title || `Gallery ${currentImageIndex + 1}`}
+                    className="simple-gallery-image"
+                    onLoad={() => handleImageLoad(currentImageIndex)}
+                    onError={() => handleImageError(currentImageIndex)}
+                  />
+
+                  {/* Navigation Arrows */}
+                  {profile?.gallery?.length > 1 && (
+                    <>
+                      <button
+                        className="simple-nav-btn prev"
+                        onClick={() => navigateGallery(-1)}
+                      >
+                        <i className="fas fa-chevron-left"></i>
+                      </button>
+                      <button
+                        className="simple-nav-btn next"
+                        onClick={() => navigateGallery(1)}
+                      >
+                        <i className="fas fa-chevron-right"></i>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Title and Description */}
+                <div className="simple-gallery-info">
+                  {selectedGalleryItem?.title && (
+                    <h4 className="simple-gallery-title">
+                      {selectedGalleryItem.title}
+                    </h4>
+                  )}
+                  {selectedGalleryItem?.description && (
+                    <p className="simple-gallery-description">
+                      {selectedGalleryItem.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Dots Indicator */}
+                {profile?.gallery?.length > 1 && (
+                  <div className="simple-dots">
+                    {profile.gallery.map((_, index) => (
+                      <button
+                        key={index}
+                        className={`simple-dot ${index === currentImageIndex ? 'active' : ''}`}
+                      onClick={() => {
+                        setCurrentImageIndex(index);
+                        setSelectedGalleryItem({ ...profile.gallery[index], index });
+                      }}
+                      />
+                    ))}
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Footer */}
         <div className="footer-note">powered by onetapp</div>
