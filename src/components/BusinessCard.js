@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -715,3 +716,5 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 };
 
 export default BusinessCard; 
+=======
+>>>>>>> new-design
