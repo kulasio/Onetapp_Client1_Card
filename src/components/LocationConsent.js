@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const LocationConsent = ({ onConsentChange, onLocationData }) => {
   const [showConsent, setShowConsent] = useState(false);
 
-  const getLocationData = async (consent) => {
+  const getLocationData = useCallback(async (consent) => {
     if (consent === 'none') {
       onLocationData(null);
       return;
@@ -93,7 +93,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
     }
 
     onLocationData(locationResult);
-  };
+  }, [onLocationData]);
 
   useEffect(() => {
     // Check if we've already asked for consent in this session
@@ -108,7 +108,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
         setShowConsent(true);
       }, 1000);
     }
-  }, []);
+  }, [getLocationData]);
 
   const handleConsent = (consent) => {
     sessionStorage.setItem('locationConsent', consent);
