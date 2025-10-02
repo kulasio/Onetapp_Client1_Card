@@ -173,6 +173,9 @@ function App() {
         };
       });
       
+      const params = new URLSearchParams(window.location.search);
+      const isPreview = params.get('preview') === '1';
+
       const tapData = {
         cardId: cardId,
         eventId: eventId,
@@ -181,6 +184,7 @@ function App() {
         geo: {},
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
+        preview: isPreview,
         actions: [{
           type: 'business_card_viewed',
           label: 'Business Card Viewed',
