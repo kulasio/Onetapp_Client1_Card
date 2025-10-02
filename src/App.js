@@ -13,7 +13,6 @@ function App() {
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [showBookModal, setShowBookModal] = useState(false);
   const [locationData, setLocationData] = useState(null);
-  const [consentLevel, setConsentLevel] = useState('none');
 
   const [bookFormData, setBookFormData] = useState({
     name: '',
@@ -85,7 +84,8 @@ function App() {
 
   // Handle location consent changes
   const handleConsentChange = useCallback((consent) => {
-    setConsentLevel(consent);
+    // Consent level is handled by LocationConsent component
+    console.log('Consent level changed to:', consent);
   }, []);
 
   // Handle location data updates

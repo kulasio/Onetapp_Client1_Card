@@ -2,42 +2,22 @@ import React, { useState, useEffect } from 'react';
 
 const LocationConsent = ({ onConsentChange, onLocationData }) => {
   const [showConsent, setShowConsent] = useState(false);
-  const [consentLevel, setConsentLevel] = useState('none');
-  const [locationData, setLocationData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Check if we've already asked for consent in this session
-    const savedConsent = sessionStorage.getItem('locationConsent');
-    if (savedConsent) {
-      setConsentLevel(savedConsent);
-      if (savedConsent !== 'none') {
-        getLocationData(savedConsent);
-      }
-    } else {
-      // Show consent modal after a short delay
-      setTimeout(() => {
-        setShowConsent(true);
-      }, 1000);
-    }
-  }, []);
 
   const getLocationData = async (consent) => {
     if (consent === 'none') {
-      setLocationData(null);
       onLocationData(null);
       return;
     }
 
-    setIsLoading(true);
     let locationResult = {
       consentLevel: consent,
-      method: 'unknown'
+      method: 'unknown',
+      timestamp: new Date()
     };
 
-    try {
-      // Try browser geolocation first
-      if (navigator.geolocation && (consent === 'full' || consent === 'basic')) {
+    // Try browser geolocation first
+    if (navigator.geolocation && (consent === 'full' || consent === 'basic')) {
+      try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: consent === 'full',
@@ -83,47 +63,60 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
             console.log('Reverse geocoding failed:', error);
           }
         }
-      } else {
-        // Fallback to IP-based location
-        try {
-          const response = await fetch('https://ipapi.co/json/');
-          const data = await response.json();
-          
-          locationResult.method = 'ip_geolocation';
-          locationResult.ip = data.ip;
-          
-          if (consent === 'full') {
-            locationResult.barangay = data.district || data.neighbourhood;
-            locationResult.city = data.city;
-            locationResult.region = data.region;
-            locationResult.province = data.region;
-          } else if (consent === 'basic') {
-            locationResult.city = data.city;
-            locationResult.region = data.region;
-            locationResult.province = data.region;
-          }
-        } catch (error) {
-          console.log('IP geolocation failed:', error);
-        }
+      } catch (geoError) {
+        console.log('Browser geolocation failed:', geoError);
       }
-    } catch (error) {
-      console.log('Location collection failed:', error);
     }
 
-    setLocationData(locationResult);
+    // Fallback to IP-based location
+    if (locationResult.method === 'unknown') {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        locationResult.method = 'ip_geolocation';
+        locationResult.ip = data.ip;
+        
+        if (consent === 'full') {
+          locationResult.barangay = data.district || data.neighbourhood;
+          locationResult.city = data.city;
+          locationResult.region = data.region;
+          locationResult.province = data.region;
+        } else if (consent === 'basic') {
+          locationResult.city = data.city;
+          locationResult.region = data.region;
+          locationResult.province = data.region;
+        }
+      } catch (error) {
+        console.log('IP geolocation failed:', error);
+      }
+    }
+
     onLocationData(locationResult);
-    setIsLoading(false);
   };
 
+  useEffect(() => {
+    // Check if we've already asked for consent in this session
+    const savedConsent = sessionStorage.getItem('locationConsent');
+    if (savedConsent) {
+      if (savedConsent !== 'none') {
+        getLocationData(savedConsent);
+      }
+    } else {
+      // Show consent modal after a short delay
+      setTimeout(() => {
+        setShowConsent(true);
+      }, 1000);
+    }
+  }, []);
+
   const handleConsent = (consent) => {
-    setConsentLevel(consent);
     sessionStorage.setItem('locationConsent', consent);
     setShowConsent(false);
     
     if (consent !== 'none') {
       getLocationData(consent);
     } else {
-      setLocationData(null);
       onLocationData(null);
     }
     
