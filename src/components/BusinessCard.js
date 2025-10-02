@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-import React, { useState } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> card-design
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -294,8 +289,13 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedGalleryItem, setSelectedGalleryItem] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
-  const [imageErrorStates, setImageErrorStates] = useState({});
+
+  // Gallery navigation
+  const navigateGallery = useCallback((direction) => {
+    const newIndex = (currentImageIndex + direction + profile.gallery.length) % profile.gallery.length;
+    setCurrentImageIndex(newIndex);
+    setSelectedGalleryItem({ ...profile.gallery[newIndex], index: newIndex });
+  }, [currentImageIndex, profile.gallery]);
 
   // Handle gallery item click
   const handleGalleryItemClick = (item, index) => {
@@ -335,29 +335,15 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showGalleryModal, currentImageIndex]);
-
-  // Gallery navigation
-  const navigateGallery = (direction) => {
-    const newIndex = (currentImageIndex + direction + profile.gallery.length) % profile.gallery.length;
-    setCurrentImageIndex(newIndex);
-    setSelectedGalleryItem({ ...profile.gallery[newIndex], index: newIndex });
-  };
+  }, [showGalleryModal, navigateGallery]);
 
   // Handle image loading states
   const handleImageLoad = (index) => {
-    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
-    setImageErrorStates(prev => ({ ...prev, [index]: false }));
+    // Image loaded successfully
   };
 
   const handleImageError = (index) => {
-    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
-    setImageErrorStates(prev => ({ ...prev, [index]: true }));
-  };
-
-  const handleImageStart = (index) => {
-    setImageLoadingStates(prev => ({ ...prev, [index]: true }));
-    setImageErrorStates(prev => ({ ...prev, [index]: false }));
+    // Handle image error if needed
   };
 
   // Get optimized image URL
@@ -838,6 +824,4 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
   );
 };
 
-export default BusinessCard; 
-=======
->>>>>>> new-design
+export default BusinessCard;
