@@ -126,40 +126,70 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
   if (!showConsent) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Location Access
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        zIndex: 999999,
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 12,
+          padding: 16,
+          width: '100%',
+          maxWidth: 420,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Location Access</h3>
+          <p style={{ fontSize: 14, color: '#4B5563', marginBottom: 16 }}>
             Help us provide better analytics by sharing your location. Your privacy is protected.
           </p>
-          
-          <div className="space-y-3">
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
+              type="button"
               onClick={() => handleConsent('full')}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '10px 12px' }}
             >
               Allow Precise Location (Barangay + City)
             </button>
-            
+
             <button
+              type="button"
               onClick={() => handleConsent('basic')}
-              className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              className="btn btn-success"
+              style={{ width: '100%', padding: '10px 12px' }}
             >
               Allow General Location (City Only)
             </button>
-            
+
             <button
+              type="button"
               onClick={() => handleConsent('none')}
-              className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '10px 12px' }}
             >
               Don't Allow Location
             </button>
           </div>
-          
-          <p className="text-xs text-gray-500 mt-3">
+
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 12 }}>
             You can change this setting anytime. No exact coordinates are stored.
           </p>
         </div>
