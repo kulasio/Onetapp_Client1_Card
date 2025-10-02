@@ -368,13 +368,6 @@ body { background: var(--bg); color: var(--text); }
 }
 
 /* Social Links - Enhanced Attractive Design */
-<<<<<<< HEAD
-.card-social { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 0.9rem 1rem; align-items: center; justify-content: center; margin: 1rem 0; }
-@media (min-width: 768px) { .card-social { grid-template-columns: repeat(3, minmax(120px, 1fr)); } }
-
-.card-social .social-link { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.9rem 0.5rem; border-radius: 12px; background: #f8fafc; border: 1px solid #e5e7eb; color: #1f2937; text-decoration: none; transition: all 0.2s ease; font-size: 1.3rem; min-height: 72px; position: relative; overflow: hidden; }
-.card-social .social-link::before { display: none; }
-=======
 .card-social {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -400,13 +393,9 @@ body { background: var(--bg); color: var(--text); }
   font-size: 1.15rem;
   min-height: 44px;
 }
->>>>>>> new-design
 
 .card-social .social-link::before { display: none; }
 
-<<<<<<< HEAD
-.card-social .social-link:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12); border-color: #cbd5e1; color: #111827; text-decoration: none; }
-=======
 .card-social .social-link:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
@@ -414,17 +403,11 @@ body { background: var(--bg); color: var(--text); }
   background: rgba(148,163,184,0.08);
   text-decoration: none;
 }
->>>>>>> new-design
 
 .card-social .social-link i { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
 
 .card-social .social-link .platform-name { font-size: 0.82rem; font-weight: 700; text-transform: capitalize; line-height: 1; }
 
-<<<<<<< HEAD
-.social-view-all-btn { font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 25px; background: #111827; color: #fff; border: none; transition: all 0.3s ease; font-weight: 600; grid-column: 1 / -1; margin-top: 0.5rem; }
-
-.social-view-all-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); color: #fff; background: #1a1a1a; }
-=======
 .social-view-all-btn {
   font-size: 0.85rem;
   padding: 0.6rem 1.2rem;
@@ -444,7 +427,6 @@ body { background: var(--bg); color: var(--text); }
   color: white;
   background: #0b1220;
 }
->>>>>>> new-design
 
 /* Responsive Social Media Grid */
 @media (max-width: 768px) {
@@ -918,10 +900,7 @@ body { background: var(--bg); color: var(--text); }
   margin-bottom: 0.5rem;
   transition: all 0.3s ease;
   text-align: justify;
-<<<<<<< HEAD
-=======
   text-justify: inter-word;
->>>>>>> new-design
 }
 
 /* Compact bio with line clamp for first-view impact */
@@ -1129,16 +1108,11 @@ body { background: var(--bg); color: var(--text); }
   left: 0;
   right: 0;
   bottom: 0;
-<<<<<<< HEAD
-  background: rgba(10, 14, 25, 0.78);
-=======
   background: rgba(0, 0, 0, 0.9);
->>>>>>> card-design
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-<<<<<<< HEAD
   padding: 1rem;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
@@ -1177,7 +1151,6 @@ body { background: var(--bg); color: var(--text); }
   position: relative;
   box-shadow: 0 24px 60px rgba(2,6,23,0.35);
   animation: modalZoomIn 180ms ease-out;
-=======
   padding: 0;
 }
 
@@ -1188,7 +1161,6 @@ body { background: var(--bg); color: var(--text); }
   display: flex;
   flex-direction: column;
   position: relative;
->>>>>>> card-design
 }
 
 /* Header */
@@ -1197,27 +1169,15 @@ body { background: var(--bg); color: var(--text); }
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-<<<<<<< HEAD
-  border-bottom: 1px solid rgba(148,163,184,0.25);
-  background: transparent;
-=======
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 10;
->>>>>>> card-design
 }
 .gallery-modal-header .gallery-modal-subtitle { color: #64748b; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em; }
 .gallery-modal-title { font-weight: 800; letter-spacing: 0.01em; }
 
-<<<<<<< HEAD
-.gallery-modal-header h4 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text);
-=======
 .gallery-counter {
   font-size: 0.9rem;
   color: #6b7280;
@@ -1225,19 +1185,13 @@ body { background: var(--bg); color: var(--text); }
   background: #f3f4f6;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
->>>>>>> card-design
 }
 
 .simple-close-btn {
   background: #ef4444;
   border: none;
-<<<<<<< HEAD
-  font-size: 1.5rem;
-  color: var(--muted);
-=======
   color: white;
   font-size: 1.1rem;
->>>>>>> card-design
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
@@ -1249,10 +1203,8 @@ body { background: var(--bg); color: var(--text); }
   transition: background 0.2s ease;
 }
 
-<<<<<<< HEAD
-.gallery-modal-close:hover {
-  background: rgba(148,163,184,0.15);
-  color: var(--text);
+.simple-close-btn:hover {
+  background: #dc2626;
 }
 
 /* Navigation buttons inside modal */
@@ -1304,9 +1256,6 @@ body { background: var(--bg); color: var(--text); }
   margin-bottom: 0.5rem;
   box-shadow: 0 12px 28px rgba(2,6,23,0.25);
   transition: transform 0.2s ease;
-=======
-.simple-close-btn:hover {
-  background: #dc2626;
 }
 
 /* Image Container */
@@ -1325,26 +1274,8 @@ body { background: var(--bg); color: var(--text); }
   max-height: 100%;
   object-fit: contain;
   display: block;
->>>>>>> card-design
-}
-.gallery-modal-frame:hover .gallery-modal-image { transform: scale(1.01); }
-
-<<<<<<< HEAD
-.gallery-modal-description {
-  color: var(--muted);
-  line-height: 1.6;
-  font-size: 1rem;
-  text-align: center;
 }
 
-@keyframes modalZoomIn { from { transform: scale(0.96); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-
-/* Responsive Modal */
-@media (max-width: 768px) {
-  .gallery-modal-content {
-    max-width: 95vw;
-    max-height: 95vh;
-=======
 /* Navigation Buttons */
 .simple-nav-btn {
   position: absolute;
@@ -1471,7 +1402,6 @@ body { background: var(--bg); color: var(--text); }
 @media (max-width: 480px) {
   .simple-gallery-header {
     padding: 0.75rem 1rem;
->>>>>>> card-design
   }
   
   .simple-nav-btn {
