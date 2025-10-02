@@ -251,21 +251,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     return actions;
   };
 
-  // Debug logging
-  console.log('BusinessCard render:', { card, user, profile });
-  console.log('Action buttons:', getActionButtons());
-  console.log('Gallery items:', profile?.gallery);
-  if (profile?.gallery) {
-    profile.gallery.forEach((item, index) => {
-      console.log(`Gallery item ${index}:`, {
-        url: item.url,
-        secureUrl: item.secureUrl,
-        publicId: item.publicId,
-        type: item.type,
-        duration: item.duration
-      });
-    });
-  }
+  // Component render logic
 
   // Handle social link click
   const handleSocialClick = (platform, url) => {

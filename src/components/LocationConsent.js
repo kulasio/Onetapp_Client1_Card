@@ -46,9 +46,9 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
           });
         });
 
-        locationResult.latitude = position.coords.latitude;
-        locationResult.longitude = position.coords.longitude;
-        locationResult.accuracy = position.coords.accuracy;
+        // Store coordinates temporarily for reverse geocoding only
+        const tempLat = position.coords.latitude;
+        const tempLng = position.coords.longitude;
         locationResult.method = 'browser_geolocation';
         locationResult.timestamp = new Date();
 
@@ -56,7 +56,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
         if (consent === 'full') {
           // Full consent: get barangay, city, region
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&addressdetails=1&accept-language=en`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tempLat}&lon=${tempLng}&addressdetails=1&accept-language=en`);
             const data = await response.json();
             
             if (data && data.address) {
@@ -71,7 +71,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
         } else if (consent === 'basic') {
           // Basic consent: get city and region only
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&addressdetails=1&accept-language=en`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tempLat}&lon=${tempLng}&addressdetails=1&accept-language=en`);
             const data = await response.json();
             
             if (data && data.address) {
