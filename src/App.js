@@ -96,6 +96,11 @@ function App() {
   // Log tap event to backend
   const logTap = useCallback(async (cardId, eventId = null) => {
     try {
+      // once-per-session guard per card to avoid duplicate view logs
+      const onceKey = `viewed_${cardId}`;
+      if (sessionStorage.getItem(onceKey) === '1') {
+        return;
+      }
       const deviceInfo = getDeviceInfo();
       
       const params = new URLSearchParams(window.location.search);
@@ -128,6 +133,7 @@ function App() {
         body: JSON.stringify(tapData)
       });
       console.log('Tap event logged successfully');
+      sessionStorage.setItem(onceKey, '1');
       
       
     } catch (error) {
@@ -155,7 +161,14 @@ function App() {
         }]
       };
 
-      console.log('Sending user action to backend:', actionLog);
+      // debounce rapid-fire identical actions within 1s on the client
+      const actKey = `last_action_${cardId}_${actionLog.actions[0].type}_${actionLog.actions[0].url || ''}`;
+      const lastAt = parseInt(sessionStorage.getItem(actKey) || '0', 10);
+      const now = Date.now();
+      if (now - lastAt < 1000) {
+        return;
+      }
+      sessionStorage.setItem(actKey, String(now));
 
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       const response = await fetch(`${API_BASE}/api/taps/action`, {
