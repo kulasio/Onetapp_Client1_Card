@@ -141,6 +141,14 @@ function App() {
     }
   }, [getOrCreateSessionId, getDeviceInfo, locationData]);
 
+  // Ensure a "business_card_viewed" is logged once after consent resolves (including none)
+  useEffect(() => {
+    if (!cardData || !cardData.card || !cardData.card._id) return;
+    const id = cardData.card._id;
+    // logTap has its own once-per-session guard; this effect just triggers it after geo/consent is ready
+    logTap(id);
+  }, [cardData, locationData, logTap]);
+
   // Log user action to backend
   const logUserAction = useCallback(async (cardId, actionData) => {
     try {
