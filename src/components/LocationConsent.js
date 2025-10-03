@@ -34,7 +34,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
 
         // Get detailed location info based on consent level
         if (consent === 'full') {
-          // Full consent: get barangay, city, region
+          // Full consent: get barangay, city, province
           try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tempLat}&lon=${tempLng}&addressdetails=1&accept-language=en`);
             const data = await response.json();
@@ -42,21 +42,19 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
             if (data && data.address) {
               locationResult.barangay = data.address.suburb || data.address.neighbourhood || data.address.village;
               locationResult.city = data.address.city || data.address.town || data.address.municipality;
-              locationResult.region = data.address.state || data.address.region;
               locationResult.province = data.address.state || data.address.region;
             }
           } catch (error) {
             console.log('Reverse geocoding failed:', error);
           }
         } else if (consent === 'basic') {
-          // Basic consent: get city and region only
+          // Basic consent: get city and province only
           try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tempLat}&lon=${tempLng}&addressdetails=1&accept-language=en`);
             const data = await response.json();
             
             if (data && data.address) {
               locationResult.city = data.address.city || data.address.town || data.address.municipality;
-              locationResult.region = data.address.state || data.address.region;
               locationResult.province = data.address.state || data.address.region;
             }
           } catch (error) {
@@ -80,11 +78,9 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
         if (consent === 'full') {
           locationResult.barangay = data.district || data.neighbourhood;
           locationResult.city = data.city;
-          locationResult.region = data.region;
           locationResult.province = data.region;
         } else if (consent === 'basic') {
           locationResult.city = data.city;
-          locationResult.region = data.region;
           locationResult.province = data.region;
         }
       } catch (error) {
@@ -176,7 +172,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
               className="btn btn-success"
               style={{ width: '100%', padding: '10px 12px' }}
             >
-              Allow General Location (City Only)
+              Allow General Location (City + Province)
             </button>
 
             <button
