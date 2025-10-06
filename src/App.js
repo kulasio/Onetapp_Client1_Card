@@ -104,15 +104,17 @@ function App() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
       try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=en`);
-        const data = await resp.json();
-        const address = data && data.address ? data.address : {};
+        const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+        const resp = await fetch(`${API_BASE}/api/geocode/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
+        const json = await resp.json();
+        const data = json && json.success ? json.data : null;
+        const address = data || {};
         setLocationData({
           consentLevel: 'basic',
           method: 'browser_geolocation',
           timestamp: new Date(),
-          city: address.city || address.town || address.municipality || address.village || undefined,
-          province: address.state || address.region || undefined,
+          city: address.city || undefined,
+          province: address.province || undefined,
           country: address.country || undefined
         });
       } catch {
