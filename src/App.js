@@ -12,6 +12,7 @@ function App() {
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [showBookModal, setShowBookModal] = useState(false);
   const [locationData, setLocationData] = useState(null);
+  const [geoResolved, setGeoResolved] = useState(false);
 
   const [bookFormData, setBookFormData] = useState({
     name: '',
@@ -81,16 +82,22 @@ function App() {
     };
   }, []);
 
-  // Native geolocation on mount (single prompt). Reverse geocode city/province.
+  // Native geolocation on mount (single prompt). Reverse geocode to city/province/country.
   useEffect(() => {
     let cancelled = false;
     const attemptKey = 'geo_attempted';
     try {
-      if (sessionStorage.getItem(attemptKey) === '1') return;
+      if (sessionStorage.getItem(attemptKey) === '1') {
+        setGeoResolved(true);
+        return;
+      }
       sessionStorage.setItem(attemptKey, '1');
     } catch {}
 
-    if (!('geolocation' in navigator)) return;
+    if (!('geolocation' in navigator)) {
+      setGeoResolved(true);
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       if (cancelled) return;
@@ -101,26 +108,22 @@ function App() {
         const data = await resp.json();
         const address = data && data.address ? data.address : {};
         setLocationData({
-          consentLevel: 'native',
+          consentLevel: 'basic',
           method: 'browser_geolocation',
           timestamp: new Date(),
-          latitude: lat,
-          longitude: lon,
           city: address.city || address.town || address.municipality || address.village || undefined,
           province: address.state || address.region || undefined,
           country: address.country || undefined
         });
       } catch {
-        setLocationData({
-          consentLevel: 'native',
-          method: 'browser_geolocation',
-          timestamp: new Date(),
-          latitude: lat,
-          longitude: lon
-        });
+        // If reverse geocoding fails, still resolve without geo
+        setLocationData(null);
+      } finally {
+        setGeoResolved(true);
       }
     }, () => {
-      // User denied or error: keep locationData as null
+      // User denied or error: resolve without geo
+      setGeoResolved(true);
     }, {
       enableHighAccuracy: true,
       timeout: 15000,
@@ -130,7 +133,7 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  // Log tap event to backend
+  // Log tap event to backend once geolocation has resolved (success or denial)
   const logTap = useCallback(async (cardId, eventId = null) => {
     try {
       // once-per-session guard per card to avoid duplicate view logs
@@ -148,7 +151,7 @@ function App() {
         eventId: eventId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData, // Use native-based location data
+        geo: locationData && locationData.consentLevel !== 'none' ? locationData : null,
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         preview: isPreview,
@@ -178,13 +181,13 @@ function App() {
     }
   }, [getOrCreateSessionId, getDeviceInfo, locationData]);
 
-  // Ensure a "business_card_viewed" is logged once after geo resolves (including none)
+  // Trigger logging after card is loaded and geoResolved
   useEffect(() => {
     if (!cardData || !cardData.card || !cardData.card._id) return;
+    if (!geoResolved) return;
     const id = cardData.card._id;
-    // logTap has its own once-per-session guard; this effect just triggers it after geo is ready or not
     logTap(id);
-  }, [cardData, locationData, logTap]);
+  }, [cardData, geoResolved, logTap]);
 
   // Log user action to backend
   const logUserAction = useCallback(async (cardId, actionData) => {
@@ -195,7 +198,7 @@ function App() {
         cardId: cardId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData, // Use native-based location data
+        geo: locationData && locationData.consentLevel !== 'none' ? locationData : null,
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         actions: [{
@@ -452,10 +455,7 @@ function App() {
 
         setCardData(data);
         
-        // Log tap event
-        if (data.card && data.card._id) {
-          logTap(data.card._id);
-        }
+        // Do not log here; wait for geolocation resolution in a separate effect
         
       } catch (err) {
         setError(err.message);
