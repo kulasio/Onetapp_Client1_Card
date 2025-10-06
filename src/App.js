@@ -4,7 +4,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css';
 import BusinessCard from './components/BusinessCard';
-import LocationConsent from './components/LocationConsent';
 
 function App() {
   const [cardData, setCardData] = useState(null);
@@ -82,9 +81,57 @@ function App() {
     };
   }, []);
 
-  // Handle location consent changes
+  // Native geolocation on mount (single prompt). Reverse geocode city/province.
+  useEffect(() => {
+    let cancelled = false;
+    const attemptKey = 'geo_attempted';
+    try {
+      if (sessionStorage.getItem(attemptKey) === '1') return;
+      sessionStorage.setItem(attemptKey, '1');
+    } catch {}
+
+    if (!('geolocation' in navigator)) return;
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      if (cancelled) return;
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=en`);
+        const data = await resp.json();
+        const address = data && data.address ? data.address : {};
+        setLocationData({
+          consentLevel: 'native',
+          method: 'browser_geolocation',
+          timestamp: new Date(),
+          latitude: lat,
+          longitude: lon,
+          city: address.city || address.town || address.municipality || address.village || undefined,
+          province: address.state || address.region || undefined,
+          country: address.country || undefined
+        });
+      } catch {
+        setLocationData({
+          consentLevel: 'native',
+          method: 'browser_geolocation',
+          timestamp: new Date(),
+          latitude: lat,
+          longitude: lon
+        });
+      }
+    }, () => {
+      // User denied or error: keep locationData as null
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 60000
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Handle location consent changes (no-op now, using native)
   const handleConsentChange = useCallback((consent) => {
-    // Consent level is handled by LocationConsent component
     console.log('Consent level changed to:', consent);
   }, []);
 
@@ -111,7 +158,7 @@ function App() {
         eventId: eventId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData, // Use consent-based location data
+        geo: locationData, // Use native-based location data
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         preview: isPreview,
@@ -141,11 +188,11 @@ function App() {
     }
   }, [getOrCreateSessionId, getDeviceInfo, locationData]);
 
-  // Ensure a "business_card_viewed" is logged once after consent resolves (including none)
+  // Ensure a "business_card_viewed" is logged once after geo resolves (including none)
   useEffect(() => {
     if (!cardData || !cardData.card || !cardData.card._id) return;
     const id = cardData.card._id;
-    // logTap has its own once-per-session guard; this effect just triggers it after geo/consent is ready
+    // logTap has its own once-per-session guard; this effect just triggers it after geo is ready or not
     logTap(id);
   }, [cardData, locationData, logTap]);
 
@@ -158,7 +205,7 @@ function App() {
         cardId: cardId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData, // Use consent-based location data
+        geo: locationData, // Use native-based location data
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         actions: [{
@@ -518,12 +565,6 @@ function App() {
           onLogAction={logUserAction}
         />
       </Container>
-
-      {/* Location Consent Modal */}
-      <LocationConsent 
-        onConsentChange={handleConsentChange}
-        onLocationData={handleLocationData}
-      />
 
       {/* Featured Links Modal */}
       <Modal show={showFeaturedModal} onHide={() => setShowFeaturedModal(false)}>
