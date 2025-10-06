@@ -130,16 +130,6 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  // Handle location consent changes (no-op now, using native)
-  const handleConsentChange = useCallback((consent) => {
-    console.log('Consent level changed to:', consent);
-  }, []);
-
-  // Handle location data updates
-  const handleLocationData = useCallback((data) => {
-    setLocationData(data);
-  }, []);
-
   // Log tap event to backend
   const logTap = useCallback(async (cardId, eventId = null) => {
     try {
