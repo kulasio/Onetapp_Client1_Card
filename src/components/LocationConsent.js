@@ -15,39 +15,7 @@ const LocationConsent = ({ onConsentChange, onLocationData }) => {
       timestamp: new Date()
     };
 
-    // Try browser geolocation first
-    if (navigator.geolocation && consent === 'basic') {
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false, // Changed to false since we don't need precise location
-            timeout: 15000,
-            maximumAge: 60000 // Only use cached location if less than 1 minute old
-          });
-        });
-
-        // Store coordinates temporarily for reverse geocoding only
-        const tempLat = position.coords.latitude;
-        const tempLng = position.coords.longitude;
-        locationResult.method = 'browser_geolocation';
-        locationResult.timestamp = new Date();
-
-        // Basic consent: get city and province only
-        try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tempLat}&lon=${tempLng}&addressdetails=1&accept-language=en`);
-          const data = await response.json();
-          
-          if (data && data.address) {
-            locationResult.city = data.address.city || data.address.town || data.address.municipality;
-            locationResult.province = data.address.state || data.address.region;
-          }
-        } catch (error) {
-          console.log('Reverse geocoding failed:', error);
-        }
-      } catch (geoError) {
-        console.log('Browser geolocation failed:', geoError);
-      }
-    }
+    // Removed browser geolocation to avoid native permission prompt
 
     // Fallback to IP-based location with multiple services
     if (locationResult.method === 'unknown') {
