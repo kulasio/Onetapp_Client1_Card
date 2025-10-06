@@ -122,7 +122,8 @@ function App() {
         setGeoResolved(true);
       }
     }, () => {
-      // User denied or error: resolve without geo
+      // User denied or error: resolve and explicitly mark no consent
+      setLocationData({ consentLevel: 'none', method: 'browser_geolocation', timestamp: new Date() });
       setGeoResolved(true);
     }, {
       enableHighAccuracy: true,
@@ -151,7 +152,7 @@ function App() {
         eventId: eventId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData && locationData.consentLevel !== 'none' ? locationData : null,
+        geo: locationData || null,
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         preview: isPreview,
@@ -198,7 +199,7 @@ function App() {
         cardId: cardId,
         timestamp: new Date(),
         ip: '',
-        geo: locationData && locationData.consentLevel !== 'none' ? locationData : null,
+        geo: locationData || null,
         userAgent: deviceInfo.userAgent,
         sessionId: getOrCreateSessionId(),
         actions: [{
