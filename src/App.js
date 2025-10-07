@@ -82,33 +82,23 @@ function App() {
     };
   }, []);
 
-  // Native geolocation on mount (single prompt). Reverse geocode to city/province/country.
+  // Native geolocation on mount, with mobile-friendly fallback on first user gesture.
   useEffect(() => {
     let cancelled = false;
+    let invoked = false;
     const attemptKey = 'geo_attempted';
-    try {
-      if (sessionStorage.getItem(attemptKey) === '1') {
-        setGeoResolved(true);
-        return;
-      }
-      sessionStorage.setItem(attemptKey, '1');
-    } catch {}
 
-    if (!('geolocation' in navigator)) {
+    const secureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+    if (!secureContext) {
+      // Geolocation prompts are blocked on insecure origins on mobile browsers
       setGeoResolved(true);
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      if (cancelled) return;
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
+    const reverseAndSet = async (lat, lon) => {
       try {
         const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
         const resp = await fetch(`${API_BASE}/api/geocode/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
-        if (!resp.ok) {
-          console.warn('Reverse geocode failed', resp.status, resp.statusText);
-        }
         const json = await resp.json().catch(() => null);
         const data = json && json.success ? json.data : null;
         const address = data || {};
@@ -122,20 +112,72 @@ function App() {
         });
       } catch (e) {
         console.warn('Reverse geocode error', e);
-        // If reverse geocoding fails, still resolve without geo
         setLocationData(null);
       } finally {
         setGeoResolved(true);
       }
-    }, () => {
-      // User denied or error: resolve and explicitly mark no consent
-      setLocationData({ consentLevel: 'none', method: 'browser_geolocation', timestamp: new Date() });
-      setGeoResolved(true);
-    }, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 60000
-    });
+    };
+
+    const requestGeo = () => {
+      if (invoked || cancelled) return;
+      invoked = true;
+      if (!('geolocation' in navigator)) {
+        setGeoResolved(true);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (cancelled) return;
+          reverseAndSet(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          setLocationData({ consentLevel: 'none', method: 'browser_geolocation', timestamp: new Date() });
+          setGeoResolved(true);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      );
+    };
+
+    // Avoid re-prompting too often per session
+    try {
+      if (sessionStorage.getItem(attemptKey) === '1') {
+        setGeoResolved(true);
+        return () => { cancelled = true; };
+      }
+      sessionStorage.setItem(attemptKey, '1');
+    } catch {}
+
+    // Try immediately on mount
+    // If browser defers prompts until user gesture (some mobile UAs), attach a one-time fallback
+    requestGeo();
+
+    let gestureBound = false;
+    const bindGestureFallback = async () => {
+      if (gestureBound || invoked) return;
+      gestureBound = true;
+      const once = () => {
+        document.removeEventListener('click', once);
+        document.removeEventListener('touchstart', once);
+        requestGeo();
+      };
+      document.addEventListener('click', once, { once: true, passive: true });
+      document.addEventListener('touchstart', once, { once: true, passive: true });
+    };
+
+    // If Permissions API says state is 'prompt', ensure fallback binds
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+          if (status.state === 'prompt') {
+            bindGestureFallback();
+          }
+        }).catch(() => bindGestureFallback());
+      } else {
+        bindGestureFallback();
+      }
+    } catch {
+      bindGestureFallback();
+    }
 
     return () => { cancelled = true; };
   }, []);
