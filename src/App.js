@@ -88,7 +88,7 @@ function App() {
     let invoked = false;
     const attemptKey = 'geo_attempted';
 
-    const secureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+    const secureContext = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost';
     if (!secureContext) {
       // Geolocation prompts are blocked on insecure origins on mobile browsers
       setGeoResolved(true);
