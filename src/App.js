@@ -106,7 +106,10 @@ function App() {
       try {
         const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
         const resp = await fetch(`${API_BASE}/api/geocode/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
-        const json = await resp.json();
+        if (!resp.ok) {
+          console.warn('Reverse geocode failed', resp.status, resp.statusText);
+        }
+        const json = await resp.json().catch(() => null);
         const data = json && json.success ? json.data : null;
         const address = data || {};
         setLocationData({
@@ -117,7 +120,8 @@ function App() {
           province: address.province || undefined,
           country: address.country || undefined
         });
-      } catch {
+      } catch (e) {
+        console.warn('Reverse geocode error', e);
         // If reverse geocoding fails, still resolve without geo
         setLocationData(null);
       } finally {
@@ -168,16 +172,20 @@ function App() {
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       
       // Send tap data immediately
-      await fetch(`${API_BASE}/api/taps`, {
+      const resp = await fetch(`${API_BASE}/api/taps`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(tapData)
       });
-      console.log('Tap event logged successfully');
-      sessionStorage.setItem(onceKey, '1');
-      
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        console.error('Tap log failed', resp.status, resp.statusText, text);
+      } else {
+        console.log('Tap event logged successfully');
+        sessionStorage.setItem(onceKey, '1');
+      }
       
     } catch (error) {
       console.log('Tap logging failed (non-critical):', error);
@@ -222,7 +230,7 @@ function App() {
       sessionStorage.setItem(actKey, String(now));
 
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const response = await fetch(`${API_BASE}/api/taps/action`, {
+      const resp = await fetch(`${API_BASE}/api/taps/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -230,12 +238,13 @@ function App() {
         body: JSON.stringify(actionLog)
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        console.error('Action log failed', resp.status, resp.statusText, text);
+      } else {
+        const result = await resp.json();
+        console.log('User action logged successfully:', result);
       }
-
-      const result = await response.json();
-      console.log('User action logged successfully:', result);
     } catch (error) {
       console.error('Action logging failed:', error);
     }
@@ -314,12 +323,17 @@ function App() {
           userAgent: navigator.userAgent
         }
       };
-      await fetch(`${API_BASE}/api/bookings`, {
+      const resp = await fetch(`${API_BASE}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      console.log('Booking request submitted to backend');
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        console.error('Booking submit failed', resp.status, resp.statusText, text);
+      } else {
+        console.log('Booking request submitted to backend');
+      }
     } catch (err) {
       console.error('Booking submit failed:', err);
     }
