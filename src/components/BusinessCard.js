@@ -148,7 +148,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     // Save Contact button - always show
     actions.push({
       label: 'Save Contact',
-      variant: 'outline-dark',
+      variant: 'secondary',
       onClick: () => {
         // Log the action first
         onLogAction(card._id, {
