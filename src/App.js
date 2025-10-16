@@ -108,7 +108,9 @@ function App() {
           timestamp: new Date(),
           city: address.city || undefined,
           province: address.province || undefined,
-          country: address.country || undefined
+          country: address.country || undefined,
+          latitude: lat,
+          longitude: lon
         });
       } catch (e) {
         console.warn('Reverse geocode error', e);
@@ -131,7 +133,7 @@ function App() {
           reverseAndSet(pos.coords.latitude, pos.coords.longitude);
         },
         () => {
-          setLocationData({ consentLevel: 'none', method: 'browser_geolocation', timestamp: new Date() });
+        setLocationData({ consentLevel: 'none', method: 'browser_geolocation', timestamp: new Date() });
           setGeoResolved(true);
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
@@ -211,6 +213,11 @@ function App() {
         }]
       };
 
+      // If we have no city/province yet but have coords, include coords explicitly
+      if (tapData.geo && (!tapData.geo.city && !tapData.geo.province) && tapData.geo.latitude && tapData.geo.longitude) {
+        tapData.geo = { ...tapData.geo };
+      }
+
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       
       // Try to get client IP from a public service before sending (best-effort)
@@ -270,6 +277,11 @@ function App() {
           timestamp: new Date()
         }]
       };
+
+      // Include coords if present even without resolved address
+      if (actionLog.geo && (!actionLog.geo.city && !actionLog.geo.province) && actionLog.geo.latitude && actionLog.geo.longitude) {
+        actionLog.geo = { ...actionLog.geo };
+      }
 
       // debounce rapid-fire identical actions within 1s on the client
       const actKey = `last_action_${cardId}_${actionLog.actions[0].type}_${actionLog.actions[0].url || ''}`;
