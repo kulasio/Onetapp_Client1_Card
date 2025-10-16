@@ -213,7 +213,16 @@ function App() {
 
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       
-      // Send tap data immediately
+      // Try to get client IP from a public service before sending (best-effort)
+      try {
+        const ipResp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        const ipJson = await ipResp.json().catch(() => null);
+        if (ipJson && ipJson.ip) {
+          tapData.ip = ipJson.ip;
+        }
+      } catch {}
+
+      // Send tap data
       const resp = await fetch(`${API_BASE}/api/taps`, {
         method: 'POST',
         headers: {
@@ -272,6 +281,15 @@ function App() {
       sessionStorage.setItem(actKey, String(now));
 
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+
+      // Try to get client IP before sending action (best-effort)
+      try {
+        const ipResp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        const ipJson = await ipResp.json().catch(() => null);
+        if (ipJson && ipJson.ip) {
+          actionLog.ip = ipJson.ip;
+        }
+      } catch {}
       const resp = await fetch(`${API_BASE}/api/taps/action`, {
         method: 'POST',
         headers: {
