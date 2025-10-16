@@ -148,7 +148,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
     // Save Contact button - always show
     actions.push({
       label: 'Save Contact',
-      variant: 'secondary',
+      variant: 'light',
       onClick: () => {
         // Log the action first
         onLogAction(card._id, {
@@ -241,7 +241,8 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
           url: ''
         });
       },
-      icon: 'fas fa-user-plus'
+      icon: 'fas fa-user-plus',
+      style: { backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }
     });
 
 
@@ -519,6 +520,7 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 variant={action.variant}
                 onClick={action.onClick}
                 className="action-btn flex-fill"
+                style={action.style}
               >
                 <i className={action.icon} style={{ marginRight: '0.5rem' }}></i>
                 {action.label}
