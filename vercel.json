@@ -13,7 +13,7 @@
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "onetapp-client1-card.vercel.app" }],
-      "destination": "https://onetappcards.com/:1",
+      "destination": "https://www.onetappcards.com/:1",
       "permanent": true
     }
   ],
