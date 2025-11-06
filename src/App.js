@@ -24,6 +24,11 @@ function App() {
     purpose: ''
   });
   const [bookThankYou, setBookThankYou] = useState(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([
+    { label: 'Morning', value: 'Morning' },
+    { label: 'Afternoon', value: 'Afternoon' },
+    { label: 'Evening', value: 'Evening' }
+  ]);
   const bookNameInputRef = useRef(null);
   const meetingTypeRef = useRef(null);
   const dateRef = useRef(null);
@@ -552,6 +557,20 @@ function App() {
 
         setCardData(data);
         
+        // Extract business hours from profile if available
+        if (data.profile && data.profile.businessHours && data.profile.businessHours.availableTimeSlots) {
+          const enabledSlots = data.profile.businessHours.availableTimeSlots
+            .filter(slot => slot.enabled !== false)
+            .map(slot => ({
+              label: slot.label || slot.value || 'Time Slot',
+              value: slot.label || slot.value || 'Time Slot'
+            }));
+          
+          if (enabledSlots.length > 0) {
+            setAvailableTimeSlots(enabledSlots);
+          }
+        }
+        
         // Do not log here; wait for geolocation resolution in a separate effect
         
       } catch (err) {
@@ -817,9 +836,9 @@ function App() {
                         aria-invalid={!!errors.time}
                       >
                         <option value="">Select preferred time</option>
-                        <option value="Morning">Morning</option>
-                        <option value="Afternoon">Afternoon</option>
-                        <option value="Evening">Evening</option>
+                        {availableTimeSlots.map((slot, index) => (
+                          <option key={index} value={slot.value}>{slot.label}</option>
+                        ))}
                       </Form.Select>
                       {errors.time && <div className="invalid-hint">{errors.time}</div>}
                       <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
