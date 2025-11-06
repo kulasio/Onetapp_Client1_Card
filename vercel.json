@@ -10,14 +10,7 @@
       }
     }
   ],
-  "redirects": [
-    {
-      "source": "/(.*)",
-      "has": [{ "type": "host", "value": "onetapp-client1-card.vercel.app" }],
-      "destination": "https://onetapp-client1-card.vercel.app/$1",
-      "permanent": true
-    }
-  ],
+  "redirects": [],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
@@ -45,7 +38,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://onetapp-fresh.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-dashboard.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-fresh.vercel.app https://www.one-tapp.com https://one-tapp.com"
+          "value": "frame-ancestors 'self' https://onetapp-fresh.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-dashboard.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-fresh.vercel.app https://vercel.com/koys-projects-c710c2ef/onetapp-webpage-3wnn https://vercel.com/koys-projects-c710c2ef/onetapp-webpage-3wnn"
         }
       ]
     }
