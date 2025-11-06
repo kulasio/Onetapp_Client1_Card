@@ -326,7 +326,15 @@ function App() {
   const fetchCardData = async (cardUid) => {
     const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
     const res = await fetch(`${API_BASE}/api/cards/dynamic/${cardUid}`);
-    if (!res.ok) throw new Error('Card not found');
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: 'Card not found' }));
+      const errorMessage = errorData.message || 'Card not found';
+      // Check if it's a disabled card error (403 status)
+      if (res.status === 403) {
+        throw new Error(errorMessage);
+      }
+      throw new Error(errorMessage);
+    }
     return await res.json();
   };
 
@@ -570,65 +578,72 @@ function App() {
   }
 
   if (error) {
+    // Check if it's a disabled card error
+    const isDisabledCard = error.includes('disabled') || error.includes('unavailable to view');
+    
     return (
       <Container className="d-flex justify-content-center align-items-center min-vh-100">
-        <Alert variant="warning">
-          <Alert.Heading>Demo Mode</Alert.Heading>
+        <Alert variant={isDisabledCard ? "danger" : "warning"}>
+          <Alert.Heading>{isDisabledCard ? "Card Unavailable" : "Demo Mode"}</Alert.Heading>
           <p>{error}</p>
-          <hr />
-          <p className="mb-0">
-            <strong>To test with real data:</strong><br />
-            1. Start your backend server on localhost:5000<br />
-            2. Add a cardUid parameter: <code>?cardUid=YOUR_CARD_UID</code><br />
-            3. Make sure you have a card in your database
-          </p>
-          <Button 
-            variant="outline-primary" 
-            className="mt-3"
-            onClick={() => {
-              // Demo card data for testing
-              setCardData({
-                card: { _id: 'demo-card' },
-                user: { username: 'Demo User' },
-                profile: {
-                  fullName: 'John Doe',
-                  jobTitle: 'Software Engineer',
-                  company: 'Tech Solutions Inc.',
-                  location: 'San Francisco, CA',
-                  phone: '+1 (555) 123-4567',
-                  email: 'john.doe@techsolutions.com',
-                  website: 'https://johndoe.dev',
-                  bio: 'John Doe is a visionary Chief Executive Officer with over 15 years of executive leadership experience in the technology sector. As the CEO of Tech Solutions Inc., he has successfully transformed the company into a market leader, driving innovation and sustainable growth across multiple business verticals.',
-                  socialLinks: {
-                    linkedin: 'https://linkedin.com/in/johndoe',
-                    twitter: 'https://twitter.com/johndoe',
-                    github: 'https://github.com/johndoe',
-                    instagram: 'https://instagram.com/johndoe',
-                    facebook: 'https://facebook.com/johndoe',
-                    youtube: 'https://youtube.com/@johndoe'
-                  },
-                  featuredLinks: [
-                    { label: 'Portfolio', url: 'https://johndoe.dev' },
-                    { label: 'Blog', url: 'https://blog.johndoe.dev' },
-                    { label: 'Resume', url: 'https://johndoe.dev/resume' },
-                    { label: 'Projects', url: 'https://johndoe.dev/projects' }
-                  ],
-                  gallery: [
-                    { url: 'https://via.placeholder.com/120x68/4F46E5/FFFFFF?text=Image+1' },
-                    { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-                    { url: 'https://vimeo.com/148751763' }
-                  ],
-                  bookNowEnabled: true,
-                  profileImage: {
-                    url: 'https://via.placeholder.com/400x600/4F46E5/FFFFFF?text=Demo+Profile'
-                  }
-                }
-              });
-              setError(null);
-            }}
-          >
-            View Demo Card
-          </Button>
+          {!isDisabledCard && (
+            <>
+              <hr />
+              <p className="mb-0">
+                <strong>To test with real data:</strong><br />
+                1. Start your backend server on localhost:5000<br />
+                2. Add a cardUid parameter: <code>?cardUid=YOUR_CARD_UID</code><br />
+                3. Make sure you have a card in your database
+              </p>
+              <Button 
+                variant="outline-primary" 
+                className="mt-3"
+                onClick={() => {
+                  // Demo card data for testing
+                  setCardData({
+                    card: { _id: 'demo-card' },
+                    user: { username: 'Demo User' },
+                    profile: {
+                      fullName: 'John Doe',
+                      jobTitle: 'Software Engineer',
+                      company: 'Tech Solutions Inc.',
+                      location: 'San Francisco, CA',
+                      phone: '+1 (555) 123-4567',
+                      email: 'john.doe@techsolutions.com',
+                      website: 'https://johndoe.dev',
+                      bio: 'John Doe is a visionary Chief Executive Officer with over 15 years of executive leadership experience in the technology sector. As the CEO of Tech Solutions Inc., he has successfully transformed the company into a market leader, driving innovation and sustainable growth across multiple business verticals.',
+                      socialLinks: {
+                        linkedin: 'https://linkedin.com/in/johndoe',
+                        twitter: 'https://twitter.com/johndoe',
+                        github: 'https://github.com/johndoe',
+                        instagram: 'https://instagram.com/johndoe',
+                        facebook: 'https://facebook.com/johndoe',
+                        youtube: 'https://youtube.com/@johndoe'
+                      },
+                      featuredLinks: [
+                        { label: 'Portfolio', url: 'https://johndoe.dev' },
+                        { label: 'Blog', url: 'https://blog.johndoe.dev' },
+                        { label: 'Resume', url: 'https://johndoe.dev/resume' },
+                        { label: 'Projects', url: 'https://johndoe.dev/projects' }
+                      ],
+                      gallery: [
+                        { url: 'https://via.placeholder.com/120x68/4F46E5/FFFFFF?text=Image+1' },
+                        { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+                        { url: 'https://vimeo.com/148751763' }
+                      ],
+                      bookNowEnabled: true,
+                      profileImage: {
+                        url: 'https://via.placeholder.com/400x600/4F46E5/FFFFFF?text=Demo+Profile'
+                      }
+                    }
+                  });
+                  setError(null);
+                }}
+              >
+                View Demo Card
+              </Button>
+            </>
+          )}
         </Alert>
       </Container>
     );
