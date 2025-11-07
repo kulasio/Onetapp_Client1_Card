@@ -25,9 +25,9 @@ function App() {
   });
   const [bookThankYou, setBookThankYou] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([
-    { label: 'Morning', value: 'Morning' },
-    { label: 'Afternoon', value: 'Afternoon' },
-    { label: 'Evening', value: 'Evening' }
+    { label: 'Morning (9:00am - 12:00pm)', value: 'Morning' },
+    { label: 'Afternoon (1:00pm - 5:00pm)', value: 'Afternoon' },
+    { label: 'Evening (6:00pm - 9:00pm)', value: 'Evening' }
   ]);
   const bookNameInputRef = useRef(null);
   const meetingTypeRef = useRef(null);
@@ -561,10 +561,39 @@ function App() {
         if (data.profile && data.profile.businessHours && data.profile.businessHours.availableTimeSlots) {
           const enabledSlots = data.profile.businessHours.availableTimeSlots
             .filter(slot => slot.enabled !== false)
-            .map(slot => ({
-              label: slot.label || slot.value || 'Time Slot',
-              value: slot.label || slot.value || 'Time Slot'
-            }));
+            .map(slot => {
+              const label = slot.label || slot.value || 'Time Slot';
+              const startTime = slot.startTime || '';
+              const endTime = slot.endTime || '';
+              
+              // Format time from 24-hour to 12-hour format
+              const formatTime = (time24) => {
+                if (!time24) return '';
+                const [hours, minutes] = time24.split(':');
+                const hour = parseInt(hours, 10);
+                const min = minutes || '00';
+                const period = hour >= 12 ? 'pm' : 'am';
+                const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                // Remove leading zero from hour if it's single digit
+                const displayHour = hour12.toString();
+                return `${displayHour}:${min}${period}`;
+              };
+              
+              const formattedStart = formatTime(startTime);
+              const formattedEnd = formatTime(endTime);
+              
+              // Create display label with time range
+              const displayLabel = formattedStart && formattedEnd 
+                ? `${label} (${formattedStart} - ${formattedEnd})`
+                : label;
+              
+              return {
+                label: displayLabel,
+                value: label, // Keep original label as value for backend
+                startTime: startTime,
+                endTime: endTime
+              };
+            });
           
           if (enabledSlots.length > 0) {
             setAvailableTimeSlots(enabledSlots);
