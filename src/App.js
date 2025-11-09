@@ -48,10 +48,10 @@ function App() {
 
 
   // Get cardUid from URL parameters
-  const getQueryParam = (param) => {
+  const getQueryParam = useCallback((param) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
-  };
+  }, []);
 
   // Convert Buffer to base64 string
   const bufferToBase64 = (bufferObj) => {
@@ -503,6 +503,49 @@ function App() {
     }
   };
 
+  // Fetch available time slots for a date
+  const fetchAvailableTimeSlots = useCallback(async (date) => {
+    if (!date || !cardData?.card?.cardUid) {
+      // Reset to all slots available if no date or card
+      setUnavailableTimeSlots([]);
+      setIsScheduleFull(false);
+      return;
+    }
+
+    setLoadingTimeSlots(true);
+    try {
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
+      
+      const resp = await fetch(`${API_BASE}/api/bookings/available-slots?cardUid=${encodeURIComponent(cardUid)}&date=${encodeURIComponent(date)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        setUnavailableTimeSlots(data.unavailableSlots || []);
+        setIsScheduleFull(data.isScheduleFull || false);
+        
+        // If currently selected time is now unavailable, clear it
+        if (data.unavailableSlots && data.unavailableSlots.includes(bookFormData.time)) {
+          setBookFormData(prev => ({ ...prev, time: '' }));
+        }
+      } else {
+        // On error, assume all slots are available
+        setUnavailableTimeSlots([]);
+        setIsScheduleFull(false);
+      }
+    } catch (err) {
+      console.error('Failed to fetch available time slots:', err);
+      // On error, assume all slots are available
+      setUnavailableTimeSlots([]);
+      setIsScheduleFull(false);
+    } finally {
+      setLoadingTimeSlots(false);
+    }
+  }, [cardData, bookFormData.time, getQueryParam]);
+
   // Autofocus the first input when the Book Now modal opens
   useEffect(() => {
     if (showBookModal) {
@@ -615,49 +658,6 @@ function App() {
       return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
     }
   }, [getUserIP, getTodayBookingCount]);
-
-  // Fetch available time slots for a date
-  const fetchAvailableTimeSlots = useCallback(async (date) => {
-    if (!date || !cardData?.card?.cardUid) {
-      // Reset to all slots available if no date or card
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-      return;
-    }
-
-    setLoadingTimeSlots(true);
-    try {
-      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
-      
-      const resp = await fetch(`${API_BASE}/api/bookings/available-slots?cardUid=${encodeURIComponent(cardUid)}&date=${encodeURIComponent(date)}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        setUnavailableTimeSlots(data.unavailableSlots || []);
-        setIsScheduleFull(data.isScheduleFull || false);
-        
-        // If currently selected time is now unavailable, clear it
-        if (data.unavailableSlots && data.unavailableSlots.includes(bookFormData.time)) {
-          setBookFormData(prev => ({ ...prev, time: '' }));
-        }
-      } else {
-        // On error, assume all slots are available
-        setUnavailableTimeSlots([]);
-        setIsScheduleFull(false);
-      }
-    } catch (err) {
-      console.error('Failed to fetch available time slots:', err);
-      // On error, assume all slots are available
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-    } finally {
-      setLoadingTimeSlots(false);
-    }
-  }, [cardData, bookFormData.time, getQueryParam]);
 
   const validateStep = (step) => {
     const newErrors = {};
