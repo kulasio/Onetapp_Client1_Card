@@ -449,9 +449,6 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
               {isFieldVisible('company') && profile?.company && (
                 <span className="badge-chip"><i className="fas fa-building"></i> {profile.company}</span>
               )}
-              {isFieldVisible('location') && profile?.contact?.location && (
-                <span className="badge-chip"><i className="fas fa-map-marker-alt"></i> {profile.contact.location}</span>
-              )}
             </div>
           </div>
           <div className="header-quick-actions">

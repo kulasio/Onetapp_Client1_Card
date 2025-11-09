@@ -38,7 +38,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://onetapp-fresh.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-dashboard.vercel.app https://onetapp-webpage-3wnn.vercel.app https://onetapp-fresh.vercel.app https://vercel.com/koys-projects-c710c2ef/onetapp-webpage-3wnn https://vercel.com/koys-projects-c710c2ef/onetapp-webpage-3wnn"
+          "value": "frame-ancestors 'self' https://www.onetappcards.com https://onetapp-fresh.vercel.app https://onetapp-dashboard.vercel.app"
         }
       ]
     }
