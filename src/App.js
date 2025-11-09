@@ -39,7 +39,9 @@ function App() {
   const [currentStep, setCurrentStep] = useState(1); // 1..4
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const MAX_PURPOSE_LEN = 500;
+  const MAX_BOOKINGS_PER_DAY = 3;
 
 
   // Get cardUid from URL parameters
@@ -372,6 +374,7 @@ function App() {
     setErrors({});
     setSubmitting(false);
     setBookThankYou(false);
+    setSubmitError(null);
   };
 
   const handleRequestClose = () => {
@@ -386,16 +389,44 @@ function App() {
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the form data to your backend
+    setSubmitError(null);
+    setSubmitting(true);
+
+    // Validate date is not in the past (double-check before submission)
+    if (bookFormData.date) {
+      const selectedDate = new Date(bookFormData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        setSubmitError("You can't book for a previous day. Please select today or a future date.");
+        setSubmitting(false);
+        setCurrentStep(3); // Go back to date selection step
+        return;
+      }
+    }
+
+    // Check rate limit before submission
+    const isRateLimited = await checkBookingRateLimit();
+    if (isRateLimited) {
+      setSubmitError(`You've reached the maximum limit of ${MAX_BOOKINGS_PER_DAY} bookings per day. Please try again tomorrow.`);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const ip = await getUserIP();
+      
       const payload = {
         cardUid: getQueryParam('cardUid') || cardData?.card?.cardUid || '',
         requester: {
           name: bookFormData.name,
           email: bookFormData.email,
           phone: bookFormData.phone,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ip: ip || ''
         },
         meeting: {
           type: bookFormData.meetingType,
@@ -408,38 +439,55 @@ function App() {
           userAgent: navigator.userAgent
         }
       };
+      
       const resp = await fetch(`${API_BASE}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       if (!resp.ok) {
-        const text = await resp.text().catch(() => '');
-        console.error('Booking submit failed', resp.status, resp.statusText, text);
-      } else {
-        console.log('Booking request submitted to backend');
+        const errorData = await resp.json().catch(() => ({ message: 'Booking submission failed' }));
+        const errorMessage = errorData.message || 'Booking submission failed';
+        
+        // Handle specific error cases
+        if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
+          setSubmitError("You can't book for a previous day. Please select today or a future date.");
+          setCurrentStep(3);
+        } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings')) {
+          setSubmitError(`You've reached the maximum limit of ${MAX_BOOKINGS_PER_DAY} bookings per day. Please try again tomorrow.`);
+        } else {
+          setSubmitError(errorMessage);
+        }
+        setSubmitting(false);
+        return;
       }
+
+      // Success - record the booking attempt
+      await recordBookingAttempt();
+      
+      setBookThankYou(true);
+      setTimeout(() => {
+        setShowBookModal(false);
+        setBookThankYou(false);
+        setBookFormData({
+          name: '',
+          email: '',
+          phone: '',
+          meetingType: '',
+          date: '',
+          time: '',
+          purpose: ''
+        });
+        setCurrentStep(1);
+        setSubmitting(false);
+        setSubmitError(null);
+      }, 2000);
     } catch (err) {
       console.error('Booking submit failed:', err);
-    }
-    
-    setSubmitting(true);
-    setBookThankYou(true);
-    setTimeout(() => {
-      setShowBookModal(false);
-      setBookThankYou(false);
-      setBookFormData({
-        name: '',
-        email: '',
-        phone: '',
-        meetingType: '',
-        date: '',
-        time: '',
-        purpose: ''
-      });
-      setCurrentStep(1);
+      setSubmitError('An error occurred while submitting your booking. Please try again.');
       setSubmitting(false);
-    }, 2000);
+    }
   };
 
   // Autofocus the first input when the Book Now modal opens
@@ -476,6 +524,77 @@ function App() {
     });
   }, [currentStep, showBookModal, cardId, logUserAction]);
 
+  // Get user IP address
+  const getUserIP = useCallback(async () => {
+    try {
+      const ipResp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+      const ipJson = await ipResp.json().catch(() => null);
+      return ipJson?.ip || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Check booking count for today (client-side tracking)
+  const getTodayBookingCount = useCallback(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const storageKey = `bookings_${today}`;
+      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      return bookings.length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  // Record a booking attempt (client-side tracking)
+  const recordBookingAttempt = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const storageKey = `bookings_${today}`;
+      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const ip = await getUserIP();
+      bookings.push({
+        timestamp: new Date().toISOString(),
+        ip: ip || 'unknown'
+      });
+      localStorage.setItem(storageKey, JSON.stringify(bookings));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [getUserIP]);
+
+  // Check booking rate limit from backend
+  const checkBookingRateLimit = useCallback(async () => {
+    try {
+      const ip = await getUserIP();
+      if (!ip) {
+        // If we can't get IP, fall back to client-side check
+        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+      }
+
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Check backend for booking count
+      const resp = await fetch(`${API_BASE}/api/bookings/check-rate-limit?ip=${encodeURIComponent(ip)}&date=${today}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.count >= MAX_BOOKINGS_PER_DAY;
+      } else {
+        // If backend check fails, use client-side check
+        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+      }
+    } catch {
+      // If check fails, use client-side check
+      return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+    }
+  }, [getUserIP, getTodayBookingCount]);
+
   const validateStep = (step) => {
     const newErrors = {};
     if (step === 1) {
@@ -488,7 +607,19 @@ function App() {
       if (!email || !emailValid) newErrors.email = 'Enter a valid email address';
     }
     if (step === 3) {
-      if (!bookFormData.date) newErrors.date = 'Please choose a date';
+      if (!bookFormData.date) {
+        newErrors.date = 'Please choose a date';
+      } else {
+        // Check if date is in the past
+        const selectedDate = new Date(bookFormData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+          newErrors.date = "You can't book for a previous day. Please select today or a future date.";
+        }
+      }
       if (!bookFormData.time) newErrors.time = 'Please choose a preferred time';
     }
     // Step 4 has optional purpose; enforce max length
@@ -848,6 +979,7 @@ function App() {
                       <Form.Control
                         ref={dateRef}
                         type="date"
+                        min={new Date().toISOString().split('T')[0]} // Set minimum date to today
                         value={bookFormData.date}
                         onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
                         aria-invalid={!!errors.date}
@@ -907,6 +1039,13 @@ function App() {
             {bookThankYou && (
               <Alert variant="success" className="mt-3">
                 Thank you! Your request has been submitted.
+              </Alert>
+            )}
+
+            {submitError && (
+              <Alert variant="danger" className="mt-3" onClose={() => setSubmitError(null)} dismissible>
+                <Alert.Heading>Booking Error</Alert.Heading>
+                <p className="mb-0">{submitError}</p>
               </Alert>
             )}
 
