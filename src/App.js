@@ -798,7 +798,7 @@ function App() {
     };
 
     loadCardData();
-  }, [logTap]);
+  }, [logTap, getQueryParam]);
 
   if (loading) {
     return (
