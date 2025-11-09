@@ -447,11 +447,18 @@ function App() {
       });
       
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({ message: 'Booking submission failed' }));
-        const errorMessage = errorData.message || 'Booking submission failed';
+        const errorData = await resp.json().catch(() => ({ error: 'Booking submission failed', message: 'Booking submission failed' }));
+        const errorType = errorData.error || '';
+        const errorMessage = errorData.message || errorData.error || 'Booking submission failed';
         
         // Handle specific error cases
-        if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
+        if (errorType === 'Schedule full' || (errorMessage.includes('schedule') && errorMessage.includes('full'))) {
+          setSubmitError(errorMessage || 'The schedule for this date is completely full. All time slots are already booked. Please choose a different date.');
+          setCurrentStep(3); // Go back to date selection step
+        } else if (errorType === 'Time slot already booked' || (errorMessage.includes('time slot') && errorMessage.includes('taken')) || errorMessage.includes('already booked')) {
+          setSubmitError(errorMessage || 'This time slot is already taken. Please choose a different time or date.');
+          setCurrentStep(3); // Go back to date selection step
+        } else if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
           setSubmitError("You can't book for a previous day. Please select today or a future date.");
           setCurrentStep(3);
         } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings')) {
