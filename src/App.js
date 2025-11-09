@@ -40,18 +40,15 @@ function App() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [unavailableTimeSlots, setUnavailableTimeSlots] = useState([]);
-  const [isScheduleFull, setIsScheduleFull] = useState(false);
-  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const MAX_PURPOSE_LEN = 500;
   const MAX_BOOKINGS_PER_DAY = 3;
 
 
   // Get cardUid from URL parameters
-  const getQueryParam = useCallback((param) => {
+  const getQueryParam = (param) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
-  }, []);
+  };
 
   // Convert Buffer to base64 string
   const bufferToBase64 = (bufferObj) => {
@@ -378,9 +375,6 @@ function App() {
     setSubmitting(false);
     setBookThankYou(false);
     setSubmitError(null);
-    setUnavailableTimeSlots([]);
-    setIsScheduleFull(false);
-    setLoadingTimeSlots(false);
   };
 
   const handleRequestClose = () => {
@@ -391,120 +385,6 @@ function App() {
     setShowBookModal(false);
     resetBookingState();
   };
-
-  // Get user IP address
-  const getUserIP = useCallback(async () => {
-    try {
-      const ipResp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-      const ipJson = await ipResp.json().catch(() => null);
-      return ipJson?.ip || null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  // Check booking count for today (client-side tracking)
-  const getTodayBookingCount = useCallback(() => {
-    try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const storageKey = `bookings_${today}`;
-      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      return bookings.length;
-    } catch {
-      return 0;
-    }
-  }, []);
-
-  // Record a booking attempt (client-side tracking)
-  const recordBookingAttempt = useCallback(async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const storageKey = `bookings_${today}`;
-      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      const ip = await getUserIP();
-      bookings.push({
-        timestamp: new Date().toISOString(),
-        ip: ip || 'unknown'
-      });
-      localStorage.setItem(storageKey, JSON.stringify(bookings));
-    } catch {
-      // Ignore storage errors
-    }
-  }, [getUserIP]);
-
-  // Fetch available time slots for a date
-  const fetchAvailableTimeSlots = useCallback(async (date) => {
-    if (!date || !cardData?.card?.cardUid) {
-      // Reset to all slots available if no date or card
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-      return;
-    }
-
-    setLoadingTimeSlots(true);
-    try {
-      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
-      
-      const resp = await fetch(`${API_BASE}/api/bookings/available-slots?cardUid=${encodeURIComponent(cardUid)}&date=${encodeURIComponent(date)}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        setUnavailableTimeSlots(data.unavailableSlots || []);
-        setIsScheduleFull(data.isScheduleFull || false);
-        
-        // If currently selected time is now unavailable, clear it
-        if (data.unavailableSlots && data.unavailableSlots.includes(bookFormData.time)) {
-          setBookFormData(prev => ({ ...prev, time: '' }));
-        }
-      } else {
-        // On error, assume all slots are available
-        setUnavailableTimeSlots([]);
-        setIsScheduleFull(false);
-      }
-    } catch (err) {
-      console.error('Failed to fetch available time slots:', err);
-      // On error, assume all slots are available
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-    } finally {
-      setLoadingTimeSlots(false);
-    }
-  }, [cardData, bookFormData.time, getQueryParam]);
-
-  // Check booking rate limit from backend
-  const checkBookingRateLimit = useCallback(async () => {
-    try {
-      const ip = await getUserIP();
-      if (!ip) {
-        // If we can't get IP, fall back to client-side check
-        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-      }
-
-      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      // Check backend for booking count
-      const resp = await fetch(`${API_BASE}/api/bookings/check-rate-limit?ip=${encodeURIComponent(ip)}&date=${today}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        return data.count >= MAX_BOOKINGS_PER_DAY;
-      } else {
-        // If backend check fails, use client-side check
-        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-      }
-    } catch {
-      // If check fails, use client-side check
-      return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-    }
-  }, [getUserIP, getTodayBookingCount]);
 
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
@@ -622,10 +502,6 @@ function App() {
             bookNameInputRef.current && bookNameInputRef.current.focus();
           } else if (currentStep === 3) {
             dateRef.current && dateRef.current.focus();
-            // If date is already selected, fetch available time slots
-            if (bookFormData.date) {
-              fetchAvailableTimeSlots(bookFormData.date);
-            }
           } else if (currentStep === 4) {
             purposeRef.current && purposeRef.current.focus();
           }
@@ -634,12 +510,8 @@ function App() {
     } else {
       // Reset thank you on close to avoid stale UI next open
       setBookThankYou(false);
-      // Reset unavailable slots when modal closes
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-      setLoadingTimeSlots(false);
     }
-  }, [showBookModal, currentStep, bookFormData.date, fetchAvailableTimeSlots]);
+  }, [showBookModal, currentStep]);
 
   // Log step view changes
   useEffect(() => {
@@ -651,6 +523,77 @@ function App() {
       url: ''
     });
   }, [currentStep, showBookModal, cardId, logUserAction]);
+
+  // Get user IP address
+  const getUserIP = useCallback(async () => {
+    try {
+      const ipResp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+      const ipJson = await ipResp.json().catch(() => null);
+      return ipJson?.ip || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Check booking count for today (client-side tracking)
+  const getTodayBookingCount = useCallback(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const storageKey = `bookings_${today}`;
+      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      return bookings.length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  // Record a booking attempt (client-side tracking)
+  const recordBookingAttempt = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const storageKey = `bookings_${today}`;
+      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const ip = await getUserIP();
+      bookings.push({
+        timestamp: new Date().toISOString(),
+        ip: ip || 'unknown'
+      });
+      localStorage.setItem(storageKey, JSON.stringify(bookings));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [getUserIP]);
+
+  // Check booking rate limit from backend
+  const checkBookingRateLimit = useCallback(async () => {
+    try {
+      const ip = await getUserIP();
+      if (!ip) {
+        // If we can't get IP, fall back to client-side check
+        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+      }
+
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Check backend for booking count
+      const resp = await fetch(`${API_BASE}/api/bookings/check-rate-limit?ip=${encodeURIComponent(ip)}&date=${today}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.count >= MAX_BOOKINGS_PER_DAY;
+      } else {
+        // If backend check fails, use client-side check
+        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+      }
+    } catch {
+      // If check fails, use client-side check
+      return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
+    }
+  }, [getUserIP, getTodayBookingCount]);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -798,7 +741,7 @@ function App() {
     };
 
     loadCardData();
-  }, [logTap, getQueryParam]);
+  }, [logTap]);
 
   if (loading) {
     return (
@@ -1038,11 +981,7 @@ function App() {
                         type="date"
                         min={new Date().toISOString().split('T')[0]} // Set minimum date to today
                         value={bookFormData.date}
-                        onChange={(e) => {
-                          const newDate = e.target.value;
-                          setBookFormData({...bookFormData, date: newDate, time: ''}); // Clear time when date changes
-                          fetchAvailableTimeSlots(newDate);
-                        }}
+                        onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
                         aria-invalid={!!errors.date}
                       />
                       {errors.date && <div className="invalid-hint">{errors.date}</div>}
@@ -1051,40 +990,19 @@ function App() {
                   <div className="col-12 col-md-6">
                     <Form.Group className="mb-2">
                       <Form.Label>Preferred Time</Form.Label>
-                      {loadingTimeSlots && (
-                        <div className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
-                          <i className="fas fa-spinner fa-spin"></i> Checking availability...
-                        </div>
-                      )}
-                      {isScheduleFull && bookFormData.date && (
-                        <div className="text-danger mb-2" style={{ fontSize: '0.85rem' }}>
-                          <i className="fas fa-exclamation-triangle"></i> This date is completely full. Please choose a different date.
-                        </div>
-                      )}
                       <Form.Select
                         ref={timeRef}
                         value={bookFormData.time}
                         onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
                         aria-invalid={!!errors.time}
-                        disabled={isScheduleFull || loadingTimeSlots}
                       >
                         <option value="">Select preferred time</option>
-                        {availableTimeSlots.map((slot, index) => {
-                          const isUnavailable = unavailableTimeSlots.includes(slot.value);
-                          return (
-                            <option 
-                              key={index} 
-                              value={slot.value}
-                              disabled={isUnavailable}
-                              style={isUnavailable ? { color: '#999', fontStyle: 'italic' } : {}}
-                            >
-                              {slot.label}{isUnavailable ? ' (Unavailable)' : ''}
-                            </option>
-                          );
-                        })}
+                        {availableTimeSlots.map((slot, index) => (
+                          <option key={index} value={slot.value}>{slot.label}</option>
+                        ))}
                       </Form.Select>
                       {errors.time && <div className="invalid-hint">{errors.time}</div>}
-                      <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We'll confirm the exact time by email.</div>
+                      <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
                     </Form.Group>
                   </div>
                 </div>
