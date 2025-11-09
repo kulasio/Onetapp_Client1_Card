@@ -29,9 +29,6 @@ function App() {
     { label: 'Afternoon (1:00pm - 5:00pm)', value: 'Afternoon' },
     { label: 'Evening (6:00pm - 9:00pm)', value: 'Evening' }
   ]);
-  const [unavailableTimeSlots, setUnavailableTimeSlots] = useState([]);
-  const [isScheduleFull, setIsScheduleFull] = useState(false);
-  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const bookNameInputRef = useRef(null);
   const meetingTypeRef = useRef(null);
   const dateRef = useRef(null);
@@ -48,10 +45,10 @@ function App() {
 
 
   // Get cardUid from URL parameters
-  const getQueryParam = useCallback((param) => {
+  const getQueryParam = (param) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
-  }, []);
+  };
 
   // Convert Buffer to base64 string
   const bufferToBase64 = (bufferObj) => {
@@ -378,9 +375,6 @@ function App() {
     setSubmitting(false);
     setBookThankYou(false);
     setSubmitError(null);
-    setUnavailableTimeSlots([]);
-    setIsScheduleFull(false);
-    setLoadingTimeSlots(false);
   };
 
   const handleRequestClose = () => {
@@ -453,98 +447,48 @@ function App() {
       });
       
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({ error: 'Booking submission failed', message: 'Booking submission failed' }));
-        const errorType = errorData.error || '';
-        const errorMessage = errorData.message || errorData.error || 'Booking submission failed';
+        const errorData = await resp.json().catch(() => ({ message: 'Booking submission failed' }));
+        const errorMessage = errorData.message || 'Booking submission failed';
         
         // Handle specific error cases
-        if (errorType === 'Schedule full' || (errorMessage.includes('schedule') && errorMessage.includes('full'))) {
-          setSubmitError(errorMessage || 'The schedule for this date is completely full. All time slots are already booked. Please choose a different date.');
-          setCurrentStep(3); // Go back to date selection step
-        } else if (errorType === 'Time slot already booked' || (errorMessage.includes('time slot') && errorMessage.includes('taken')) || errorMessage.includes('already booked')) {
-          setSubmitError(errorMessage || 'This time slot is already taken. Please choose a different time or date.');
-          setCurrentStep(3); // Go back to date selection step
-        } else if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
+        if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
           setSubmitError("You can't book for a previous day. Please select today or a future date.");
           setCurrentStep(3);
         } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings')) {
           setSubmitError(`You've reached the maximum limit of ${MAX_BOOKINGS_PER_DAY} bookings per day. Please try again tomorrow.`);
-        } else {
+      } else {
           setSubmitError(errorMessage);
-        }
+      }
         setSubmitting(false);
         return;
-      }
-
+    }
+    
       // Success - record the booking attempt
       await recordBookingAttempt();
       
-      setBookThankYou(true);
-      setTimeout(() => {
-        setShowBookModal(false);
-        setBookThankYou(false);
-        setBookFormData({
-          name: '',
-          email: '',
-          phone: '',
-          meetingType: '',
-          date: '',
-          time: '',
-          purpose: ''
-        });
-        setCurrentStep(1);
-        setSubmitting(false);
+    setBookThankYou(true);
+    setTimeout(() => {
+      setShowBookModal(false);
+      setBookThankYou(false);
+      setBookFormData({
+        name: '',
+        email: '',
+        phone: '',
+        meetingType: '',
+        date: '',
+        time: '',
+        purpose: ''
+      });
+      setCurrentStep(1);
+      setSubmitting(false);
         setSubmitError(null);
-      }, 2000);
+    }, 2000);
     } catch (err) {
       console.error('Booking submit failed:', err);
       setSubmitError('An error occurred while submitting your booking. Please try again.');
       setSubmitting(false);
     }
   };
-
-  // Fetch available time slots for a date
-  const fetchAvailableTimeSlots = useCallback(async (date) => {
-    if (!date || !cardData?.card?.cardUid) {
-      // Reset to all slots available if no date or card
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-      return;
-    }
-
-    setLoadingTimeSlots(true);
-    try {
-      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
-      
-      const resp = await fetch(`${API_BASE}/api/bookings/available-slots?cardUid=${encodeURIComponent(cardUid)}&date=${encodeURIComponent(date)}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        setUnavailableTimeSlots(data.unavailableSlots || []);
-        setIsScheduleFull(data.isScheduleFull || false);
-        
-        // If currently selected time is now unavailable, clear it
-        if (data.unavailableSlots && data.unavailableSlots.includes(bookFormData.time)) {
-          setBookFormData(prev => ({ ...prev, time: '' }));
-        }
-      } else {
-        // On error, assume all slots are available
-        setUnavailableTimeSlots([]);
-        setIsScheduleFull(false);
-      }
-    } catch (err) {
-      console.error('Failed to fetch available time slots:', err);
-      // On error, assume all slots are available
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-    } finally {
-      setLoadingTimeSlots(false);
-    }
-  }, [cardData, bookFormData.time, getQueryParam]);
 
   // Autofocus the first input when the Book Now modal opens
   useEffect(() => {
@@ -558,10 +502,6 @@ function App() {
             bookNameInputRef.current && bookNameInputRef.current.focus();
           } else if (currentStep === 3) {
             dateRef.current && dateRef.current.focus();
-            // If date is already selected, fetch available time slots
-            if (bookFormData.date) {
-              fetchAvailableTimeSlots(bookFormData.date);
-            }
           } else if (currentStep === 4) {
             purposeRef.current && purposeRef.current.focus();
           }
@@ -570,12 +510,8 @@ function App() {
     } else {
       // Reset thank you on close to avoid stale UI next open
       setBookThankYou(false);
-      // Reset unavailable slots when modal closes
-      setUnavailableTimeSlots([]);
-      setIsScheduleFull(false);
-      setLoadingTimeSlots(false);
     }
-  }, [showBookModal, currentStep, bookFormData.date, fetchAvailableTimeSlots]);
+  }, [showBookModal, currentStep]);
 
   // Log step view changes
   useEffect(() => {
@@ -805,7 +741,7 @@ function App() {
     };
 
     loadCardData();
-  }, [logTap, getQueryParam]);
+  }, [logTap]);
 
   if (loading) {
     return (
@@ -1045,11 +981,7 @@ function App() {
                         type="date"
                         min={new Date().toISOString().split('T')[0]} // Set minimum date to today
                         value={bookFormData.date}
-                        onChange={(e) => {
-                          const newDate = e.target.value;
-                          setBookFormData({...bookFormData, date: newDate, time: ''}); // Clear time when date changes
-                          fetchAvailableTimeSlots(newDate);
-                        }}
+                        onChange={(e) => setBookFormData({...bookFormData, date: e.target.value})}
                         aria-invalid={!!errors.date}
                       />
                       {errors.date && <div className="invalid-hint">{errors.date}</div>}
@@ -1058,40 +990,19 @@ function App() {
                   <div className="col-12 col-md-6">
                     <Form.Group className="mb-2">
                       <Form.Label>Preferred Time</Form.Label>
-                      {loadingTimeSlots && (
-                        <div className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
-                          <i className="fas fa-spinner fa-spin"></i> Checking availability...
-                        </div>
-                      )}
-                      {isScheduleFull && bookFormData.date && (
-                        <div className="text-danger mb-2" style={{ fontSize: '0.85rem' }}>
-                          <i className="fas fa-exclamation-triangle"></i> This date is completely full. Please choose a different date.
-                        </div>
-                      )}
                       <Form.Select
                         ref={timeRef}
                         value={bookFormData.time}
                         onChange={(e) => setBookFormData({...bookFormData, time: e.target.value})}
                         aria-invalid={!!errors.time}
-                        disabled={isScheduleFull || loadingTimeSlots}
                       >
                         <option value="">Select preferred time</option>
-                        {availableTimeSlots.map((slot, index) => {
-                          const isUnavailable = unavailableTimeSlots.includes(slot.value);
-                          return (
-                            <option 
-                              key={index} 
-                              value={slot.value}
-                              disabled={isUnavailable}
-                              style={isUnavailable ? { color: '#999', fontStyle: 'italic' } : {}}
-                            >
-                              {slot.label}{isUnavailable ? ' (Unavailable)' : ''}
-                            </option>
-                          );
-                        })}
+                        {availableTimeSlots.map((slot, index) => (
+                          <option key={index} value={slot.value}>{slot.label}</option>
+                        ))}
                       </Form.Select>
                       {errors.time && <div className="invalid-hint">{errors.time}</div>}
-                      <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We'll confirm the exact time by email.</div>
+                      <div className="text-muted mt-1" style={{ fontSize: '0.85rem' }}>We’ll confirm the exact time by email.</div>
                     </Form.Group>
                   </div>
                 </div>
