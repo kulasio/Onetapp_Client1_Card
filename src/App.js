@@ -408,7 +408,11 @@ function App() {
       
       const resp = await fetch(`${API_BASE}/api/bookings/available-slots?cardUid=${encodeURIComponent(cardUid)}&date=${encodeURIComponent(date)}`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'omit' // Don't send cookies/auth headers
       });
 
       if (resp.ok) {
