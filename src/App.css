@@ -33,14 +33,31 @@ body { background: var(--bg); color: var(--text); }
 
 /* Book Now modal responsive tweaks */
 .book-modal .modal-dialog {
-  margin: 1rem;
-  max-width: 600px;
+  margin: 1.5rem auto;
+  max-width: 500px;
 }
 
 .book-modal .modal-body {
   padding-bottom: 0.5rem;
 }
 
+/* Desktop: Keep modal compact */
+@media (min-width: 768px) {
+  .book-modal .modal-dialog {
+    max-width: 500px;
+    margin: 2rem auto;
+  }
+}
+
+/* Tablet: Medium size */
+@media (max-width: 767px) and (min-width: 601px) {
+  .book-modal .modal-dialog {
+    max-width: 550px;
+    margin: 1.5rem auto;
+  }
+}
+
+/* Mobile: Responsive with margins */
 @media (max-width: 600px) {
   .book-modal .modal-dialog {
     margin: 1rem 0.75rem;

@@ -933,7 +933,6 @@ function App() {
         onHide={handleRequestClose}
         centered
         scrollable
-        size="lg"
         className="book-modal"
       >
         <Modal.Header closeButton>
