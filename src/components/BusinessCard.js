@@ -486,20 +486,20 @@ const BusinessCard = ({ cardData, onShowFeaturedModal, onShowBookModal, onLogAct
                 <i className="fas fa-map-marker-alt"></i>
               </button>
             )}
-            {/* Quote */}
+            {/* Quick Email */}
             <button
               className="quick-icon"
-              title="Request Quote"
+              title="Send a Quick Email"
               disabled={!isFieldVisible('email') || !profile?.contact?.email}
               onClick={() => {
-                onLogAction(card._id, { type: 'request_quote_click', label: 'Clicked Request Quote', url: '' });
-                const subject = encodeURIComponent(`Quote Request from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
-                const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI'm interested in your services and would like to request a quote.\n\nPlease provide details about:\n- Project requirements\n- Timeline\n- Budget range\n\nLooking forward to hearing from you!\n\nBest regards`);
+                onLogAction(card._id, { type: 'request_quote_click', label: 'Clicked Send a Quick Email', url: '' });
+                const subject = encodeURIComponent(`Quick Message from ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'Contact'}`);
+                const body = encodeURIComponent(`Hi ${isFieldVisible('fullName') ? (profile?.fullName || user?.username || 'Contact') : 'there'},\n\nI wanted to reach out and connect with you.\n\nLooking forward to hearing from you!\n\nBest regards`);
                 const emailUrl = `mailto:${isFieldVisible('email') ? (profile?.contact?.email || '') : ''}?subject=${subject}&body=${body}`;
                 window.open(emailUrl);
               }}
             >
-              <i className="fas fa-file-invoice-dollar"></i>
+              <i className="fas fa-envelope"></i>
             </button>
           </div>
         </div>
