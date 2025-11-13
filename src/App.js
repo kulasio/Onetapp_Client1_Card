@@ -957,7 +957,6 @@ function App() {
                   <Form.Label>Preferred Meeting Type</Form.Label>
                   <div className="meeting-type-grid" role="radiogroup" aria-label="Meeting Type">
                     {[
-                      { value: 'In Person', icon: 'fa-user-friends', label: 'In Person' },
                       { value: 'Phone Call', icon: 'fa-phone-alt', label: 'Phone Call' },
                       { value: 'Video Call', icon: 'fa-video', label: 'Video Call' }
                     ].map((opt) => (
