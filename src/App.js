@@ -463,18 +463,16 @@ function App() {
 
   const checkBookingDeviceLimit = useCallback(async () => {
     try {
-      if (!bookFormData.date) {
-        return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
-      }
       const deviceId = getOrCreateDeviceId();
       const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
       if (!deviceId || !cardUid) {
         return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
       }
+      const attemptDate = new Date().toISOString().split('T')[0];
 
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       const resp = await fetch(
-        `${API_BASE}/api/bookings/check-device-limit?cardUid=${encodeURIComponent(cardUid)}&deviceId=${encodeURIComponent(deviceId)}&date=${encodeURIComponent(bookFormData.date)}`,
+        `${API_BASE}/api/bookings/check-device-limit?cardUid=${encodeURIComponent(cardUid)}&deviceId=${encodeURIComponent(deviceId)}&date=${encodeURIComponent(attemptDate)}`,
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
