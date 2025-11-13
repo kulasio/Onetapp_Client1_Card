@@ -44,6 +44,8 @@ function App() {
   const [isScheduleFull, setIsScheduleFull] = useState(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const MAX_PURPOSE_LEN = 500;
+  const MAX_BOOKINGS_PER_DAY = 3;
+  const DEVICE_ID_STORAGE_KEY = 'nfc_device_id';
 
 
   // Get cardUid from URL parameters
@@ -89,6 +91,23 @@ function App() {
       screenResolution: `${window.screen.width}x${window.screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`
     };
+  }, []);
+
+  const getOrCreateDeviceId = useCallback(() => {
+    try {
+      let deviceId = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+      if (!deviceId) {
+        if (window.crypto?.randomUUID) {
+          deviceId = window.crypto.randomUUID();
+        } else {
+          deviceId = `device_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        }
+        localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
+      }
+      return deviceId;
+    } catch {
+      return `device_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    }
   }, []);
 
   // Native geolocation on mount, with mobile-friendly fallback on first user gesture.
@@ -192,6 +211,10 @@ function App() {
 
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    getOrCreateDeviceId();
+  }, [getOrCreateDeviceId]);
 
   // Log tap event to backend once geolocation has resolved (success or denial)
   const logTap = useCallback(async (cardId, eventId = null) => {
@@ -438,6 +461,42 @@ function App() {
     }
   }, [cardData, bookFormData.time, getQueryParam]);
 
+  const checkBookingDeviceLimit = useCallback(async () => {
+    try {
+      if (!bookFormData.date) {
+        return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
+      }
+      const deviceId = getOrCreateDeviceId();
+      const cardUid = getQueryParam('cardUid') || cardData?.card?.cardUid || '';
+      if (!deviceId || !cardUid) {
+        return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
+      }
+
+      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
+      const resp = await fetch(
+        `${API_BASE}/api/bookings/check-device-limit?cardUid=${encodeURIComponent(cardUid)}&deviceId=${encodeURIComponent(deviceId)}&date=${encodeURIComponent(bookFormData.date)}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store'
+        }
+      );
+
+      if (resp.ok) {
+        const data = await resp.json();
+        return {
+          limited: !!data.limited,
+          count: data.count ?? 0,
+          limit: data.limit ?? MAX_BOOKINGS_PER_DAY,
+          message: data.message
+        };
+      }
+    } catch (error) {
+      console.warn('Device limit check failed:', error);
+    }
+    return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
+  }, [bookFormData.date, cardData, getOrCreateDeviceId, getQueryParam]);
+
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
     e.preventDefault();
@@ -459,9 +518,20 @@ function App() {
       }
     }
 
+    const limitCheck = await checkBookingDeviceLimit();
+    if (limitCheck.limited) {
+      setSubmitError(
+        limitCheck.message ||
+        `You've reached the maximum of ${limitCheck.limit} bookings for this card today. Please try again tomorrow.`
+      );
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       const ip = await getUserIP();
+      const deviceId = getOrCreateDeviceId();
       
       const payload = {
         cardUid: getQueryParam('cardUid') || cardData?.card?.cardUid || '',
@@ -480,7 +550,8 @@ function App() {
         },
         meta: {
           sessionId: getOrCreateSessionId(),
-          userAgent: navigator.userAgent
+          userAgent: navigator.userAgent,
+          deviceId
         }
       };
       
@@ -498,8 +569,12 @@ function App() {
         if (errorMessage.includes('past date') || errorMessage.includes('previous day')) {
           setSubmitError("You can't book for a previous day. Please select today or a future date.");
           setCurrentStep(3);
-        } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings')) {
-          setSubmitError('Unable to process booking at this time. Please try again later.');
+        } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings') || errorData.error === 'rate_limit_exceeded') {
+          const limit = errorData.limit || limitCheck.limit || MAX_BOOKINGS_PER_DAY;
+          setSubmitError(
+            errorData.message ||
+            `You've reached the maximum of ${limit} bookings for this card today. Please try again tomorrow.`
+          );
         } else {
           setSubmitError(errorMessage);
         }
