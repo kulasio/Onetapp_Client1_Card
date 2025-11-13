@@ -44,7 +44,6 @@ function App() {
   const [isScheduleFull, setIsScheduleFull] = useState(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const MAX_PURPOSE_LEN = 500;
-  const MAX_BOOKINGS_PER_DAY = 3;
 
 
   // Get cardUid from URL parameters
@@ -460,14 +459,6 @@ function App() {
       }
     }
 
-    // Check rate limit before submission
-    const isRateLimited = await checkBookingRateLimit();
-    if (isRateLimited) {
-      setSubmitError(`You've reached the maximum limit of ${MAX_BOOKINGS_PER_DAY} bookings per day. Please try again tomorrow.`);
-      setSubmitting(false);
-      return;
-    }
-
     try {
       const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
       const ip = await getUserIP();
@@ -508,17 +499,14 @@ function App() {
           setSubmitError("You can't book for a previous day. Please select today or a future date.");
           setCurrentStep(3);
         } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many bookings')) {
-          setSubmitError(`You've reached the maximum limit of ${MAX_BOOKINGS_PER_DAY} bookings per day. Please try again tomorrow.`);
-      } else {
+          setSubmitError('Unable to process booking at this time. Please try again later.');
+        } else {
           setSubmitError(errorMessage);
-      }
+        }
         setSubmitting(false);
         return;
     }
     
-      // Success - record the booking attempt
-      await recordBookingAttempt();
-      
     setBookThankYou(true);
     setTimeout(() => {
       setShowBookModal(false);
@@ -595,66 +583,6 @@ function App() {
       return null;
     }
   }, []);
-
-  // Check booking count for today (client-side tracking)
-  const getTodayBookingCount = useCallback(() => {
-    try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const storageKey = `bookings_${today}`;
-      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      return bookings.length;
-    } catch {
-      return 0;
-    }
-  }, []);
-
-  // Record a booking attempt (client-side tracking)
-  const recordBookingAttempt = useCallback(async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const storageKey = `bookings_${today}`;
-      const bookings = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      const ip = await getUserIP();
-      bookings.push({
-        timestamp: new Date().toISOString(),
-        ip: ip || 'unknown'
-      });
-      localStorage.setItem(storageKey, JSON.stringify(bookings));
-    } catch {
-      // Ignore storage errors
-    }
-  }, [getUserIP]);
-
-  // Check booking rate limit from backend
-  const checkBookingRateLimit = useCallback(async () => {
-    try {
-      const ip = await getUserIP();
-      if (!ip) {
-        // If we can't get IP, fall back to client-side check
-        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-      }
-
-      const API_BASE = process.env.REACT_APP_API_BASE || 'https://onetapp-backend-website.onrender.com';
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      // Check backend for booking count
-      const resp = await fetch(`${API_BASE}/api/bookings/check-rate-limit?ip=${encodeURIComponent(ip)}&date=${today}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        return data.count >= MAX_BOOKINGS_PER_DAY;
-      } else {
-        // If backend check fails, use client-side check
-        return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-      }
-    } catch {
-      // If check fails, use client-side check
-      return getTodayBookingCount() >= MAX_BOOKINGS_PER_DAY;
-    }
-  }, [getUserIP, getTodayBookingCount]);
 
   const validateStep = (step) => {
     const newErrors = {};
