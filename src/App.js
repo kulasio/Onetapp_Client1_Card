@@ -493,7 +493,7 @@ function App() {
       console.warn('Device limit check failed:', error);
     }
     return { limited: false, count: 0, limit: MAX_BOOKINGS_PER_DAY };
-  }, [bookFormData.date, cardData, getOrCreateDeviceId, getQueryParam]);
+  }, [cardData, getOrCreateDeviceId, getQueryParam]);
 
   // Handle book now form submission
   const handleBookSubmit = async (e) => {
